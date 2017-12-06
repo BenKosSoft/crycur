@@ -1,5 +1,6 @@
 from random import randint, choice
-import sys, string
+import sys
+import string
 import hashlib
 
 
