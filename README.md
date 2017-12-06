@@ -12,7 +12,7 @@ In cryptocurrency systems, miners approve transactions by running the proof-of-w
 ## Getting Started
 
 &nbsp;&nbsp;&nbsp;&nbsp;
-This program is written in Python 2.7. All code should be run with Python 2.7. 
+This program is written in Python 2.7, **Windows 10**. All code should be run with Python 2.7. 
 Program creates chain of transactions and prints them into file called "LongestChain.txt".
 
     $ python blockchaining.py
