@@ -13,13 +13,13 @@ def random_string(size=6, chars=string.ascii_uppercase + string.digits):
 
 def checkDSAparams(p, q, g):
     warnings.simplefilter('ignore')
-    check = pyprimes.is_prime(q)
+    check = pyprimes.isprime(q)
     warnings.simplefilter('default')
     if check == False:
         return -1
 
     warnings.simplefilter('ignore')
-    check = pyprimes.is_prime(p)
+    check = pyprimes.isprime(p)
     warnings.simplefilter('default')
     if check == False:
         return -2
@@ -51,8 +51,8 @@ TxGenOn = 0  # set to 1 if you want to generate a signed bitcoin transaction
 # DSA parameter generation
 if ParamGenOn:
     print "DSA Parameter Generation: "
-    small_bound = 1 << 256
-    large_bound = 1 << 2048
+    small_bound = 256
+    large_bound = 2048
 
     q, p, g = DSA.DL_Param_Generator(small_bound, large_bound)
 
