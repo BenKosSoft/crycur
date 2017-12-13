@@ -5,6 +5,7 @@ from random import randint
 from pyprimes import isprime
 import hashlib
 import sys
+import os
 if sys.version < (3, 6):
     import sha3
 
