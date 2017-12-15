@@ -60,7 +60,7 @@ def DL_Param_Generator(small_bound, large_bound):
             break
 
     # Writing to file
-    with open("DSA params.txt", 'w') as _file:
+    with open("DSA_params.txt", 'w') as _file:
         _file.write(str(q) + "\n")
         _file.write(str(p) + "\n")
         _file.write(str(g))
