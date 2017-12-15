@@ -2,12 +2,22 @@
     Created by mbenlioglu & mertkosan on 12/13/2017
 """
 from random import randint
-from pyprimes import isprime
+from pyprimes import isprime, nprimes
 import hashlib
 import sys
 import os
+
 if sys.version < (3, 6):
     import sha3
+
+prime_list = list(nprimes(30))
+
+
+def _first_prime_check(p):
+    for prime in prime_list:
+        if p % prime == 0:
+            return False
+    return True
 
 
 def _multiplicative_inverse(num, modulo):
@@ -36,7 +46,8 @@ def _multiplicative_inverse(num, modulo):
 
 def DL_Param_Generator(small_bound, large_bound):
     # generate q
-    small_lb, small_ub = 1 << (small_bound-1), (1 << small_bound) - 1
+    small_bound, large_bound = len(bin(small_bound)) - 3, len(bin(large_bound)) - 3
+    small_lb, small_ub = 1 << (small_bound - 1), (1 << small_bound) - 1
     while True:
         q = randint(small_lb, small_ub)
         is_prime = isprime(q)
@@ -44,18 +55,19 @@ def DL_Param_Generator(small_bound, large_bound):
             break
 
     # generate p
-    lower_multiplier = ((1 << (large_bound-1)) + q - 1) / q
+    lower_multiplier = ((1 << (large_bound - 1)) + q - 1) / q
     upper_multiplier = ((1 << large_bound) - 1) / q
     while True:
         p = randint(lower_multiplier, upper_multiplier) * q + 1
-        is_prime = isprime(p)
-        if is_prime:
-            break
+        if _first_prime_check(p):
+            is_prime = isprime(p)
+            if is_prime:
+                break
 
     # generate g
     while True:
         alpha = randint(2, p - 1)
-        g = pow(alpha, (p-1)/q, p)
+        g = pow(alpha, (p - 1) / q, p)
         if 1 != g:
             break
 
@@ -100,15 +112,15 @@ def SignVer(msg, r, s, p, q, g, beta):
 def SignVerFromFile(filename):
     if os.path.exists(filename):
         with open(filename) as _file:
-            transaction = _file.read()
-            lines = transaction.split('\n')
+            lines = _file.readlines()
+            signed_part = "".join(lines[0:len(lines) - 2])
             p = long(lines[5][3:])
             q = long(lines[6][3:])
             g = long(lines[7][3:])
             beta = long(lines[8][19:])
             r = long(lines[9][15:])
             s = long(lines[10][15:])
-        if SignVer(transaction, r, s, p, q, g, beta):
+        if SignVer(signed_part, r, s, p, q, g, beta):
             print "Signature is valid!"
         else:
             print "Signature is not valid!"
