@@ -35,8 +35,7 @@ def GenSingleTx(p, q, g, alpha, beta):
                                amount + p_transaction + q_transaction + \
                                g_transaction + public_key_beta
 
-    h = hashlib.sha3_256(transaction_without_sign).hexdigest()
-    r, s = DSA.SignGen(h, p, q, g, alpha, beta)
+    r, s = DSA.SignGen(transaction_without_sign, p, q, g, alpha, beta)
 
     sign_r = "Signature (r): " + str(r) + "\n"
     sign_s = "Signature (s): " + str(s) + "\n"

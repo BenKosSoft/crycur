@@ -6,10 +6,8 @@ import pyprimes
 import hashlib
 import DSA, TxGen
 
-
 def random_string(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for x in range(size))
-
 
 def checkDSAparams(p, q, g):
     warnings.simplefilter('ignore')
@@ -24,29 +22,29 @@ def checkDSAparams(p, q, g):
     if check == False:
         return -2
 
-    r = (p - 1) % q
-    if (r != 0):
+    r = (p-1)%q
+    if(r != 0):
         return -3
 
-    k = (p - 1) / q
+    k = (p-1)/q
 
     x = pow(g, k, p)
-    if (x == 1):
+    if (x==1):
         return -4
-    y = pow(g, q, p)
-    if (y != 1):
+    y = pow(g,q,p)
+    if (y!=1):
         return -4
 
     return 0
 
-
-# random.seed(3) # uncommment if you want it to generate the same random number in every run
-ParamGenOn = 0  # set to 1 if you want to generate the DSA parameters
-ParamTestOn = 0  # set to 1 if you want to validate the DSA parameters 
-KeyGenOn = 0  # set to 1 if your want to generate secret/public key pair for a user
-KeyTestOn = 0  # set to 1 if you want to validate the DSA keys
-SignTestOn = 0  # set to 1 if you want to test your signature generation and verification
-TxGenOn = 0  # set to 1 if you want to generate a signed bitcoin transaction
+# random.seed(3) # uncommment if you want it to generate the same random number in every run 
+ParamGenOn = 0   # set to 1 if you want to generate the DSA parameters
+ParamTestOn = 0  # set to 1 if you want to validate the DSA parameters
+KeyGenOn = 0     # set to 1 if your want to generate secret/public key pair for a user
+KeyTestOn = 0    # set to 1 if you want to validate the DSA keys
+SignTestOn = 0   # set to 1 if you want to test your signature generation and verification
+TxGenOn = 1      # set to 1 if you want to generate a signed bitcoin transaction
+TxTestOn = 1     # set to 1 if you want to validate your transaction
 
 # DSA parameter generation
 if ParamGenOn:
@@ -67,7 +65,7 @@ if ParamGenOn:
 
 # Validation for DSA parameter generation
 if ParamTestOn:
-    if ParamGenOn == 0:
+    if ParamGenOn==0:
         if os.path.exists('DSA_params.txt') == True:
             inf = open('DSA_params.txt', 'r')
             q = int(inf.readline())
@@ -78,9 +76,9 @@ if ParamTestOn:
         else:
             print 'DSA_params.txt does not exist'
             sys.exit()
-
+  
     res = checkDSAparams(p, q, g)
-    if res == 0:
+    if res ==0:
         print "\nDSA parameters are OK:))"
     elif res == -1:
         print "\nq is not prime:(:("
@@ -100,7 +98,7 @@ if ParamTestOn:
 
 # DSA key generation
 if KeyGenOn:
-    if ParamGenOn == 0:
+    if ParamGenOn==0:
         if os.path.exists('DSA_params.txt') == True:
             inf = open('DSA_params.txt', 'r')
             q = int(inf.readline())
@@ -111,27 +109,27 @@ if KeyGenOn:
         else:
             print 'DSA_params.txt does not exist'
             sys.exit()
-
+            
     (alpha, beta) = DSA.KeyGen(p, q, g)
     outf = open('DSA_skey.txt', 'w')
-    outf.write(str(q) + "\n")
-    outf.write(str(p) + "\n")
-    outf.write(str(g) + "\n")
-    outf.write(str(alpha) + "\n")
+    outf.write(str(q)+"\n")
+    outf.write(str(p)+"\n")
+    outf.write(str(g)+"\n")
+    outf.write(str(alpha)+"\n")
     outf.close()
-    print "Public key written into file DSA_skey.txt"
+    print "Public key written into file DSA_skey.txt" 
 
     outf = open('DSA_pkey.txt', 'w')
-    outf.write(str(q) + "\n")
-    outf.write(str(p) + "\n")
-    outf.write(str(g) + "\n")
-    outf.write(str(beta) + "\n")
+    outf.write(str(q)+"\n")
+    outf.write(str(p)+"\n")
+    outf.write(str(g)+"\n")
+    outf.write(str(beta)+"\n")
     outf.close()
     print "Public key written into file DSA_pkey.txt"
 
 # DSA key validation
 if KeyTestOn:
-    if KeyGenOn == 0:
+    if KeyGenOn==0:
         if os.path.exists('DSA_pkey.txt') == True and os.path.exists('DSA_skey.txt') == True:
             skeyFile = open('DSA_skey.txt', 'r')
             q = int(skeyFile.readline())
@@ -146,7 +144,7 @@ if KeyTestOn:
             beta = int(lines[3])
             pkeyFile.close()
             print "Public key is read from DSA_pkey.txt"
-
+            
         else:
             print 'DSA_skey.txt or DSA_pkey.txt does not exist'
             sys.exit()
@@ -174,20 +172,20 @@ if SignTestOn:
             beta = int(lines[3])
             pkeyFile.close()
             print "Public key is read from DSA_pkey.txt"
-
+            
         else:
             print 'DSA_skey.txt or DSA_pkey.txt does not exist'
             sys.exit()
 
     # pick a random message (string)
-    m = random_string(random.randint(1, 100))
+    m = random_string(random.randint(1,100))
     print "message: ", m
     (r, s) = DSA.SignGen(m, p, q, g, alpha, beta)
     print "Signature:"
     print "r: ", r
     print "s: ", s
 
-    if DSA.SignVer(m, r, s, p, q, g, beta) == 1:
+    if DSA.SignVer(m, r, s, p, q, g, beta)==1:
         print "Signature verifies:))"
     else:
         print "Signature does not verify:(("
@@ -210,13 +208,40 @@ if TxGenOn:
             beta = int(lines[3])
             pkeyFile.close()
             print "Public key is read from DSA_pkey.txt"
-
+            
         else:
             print 'DSA_skey.txt or DSA_pkey.txt does not exist'
             sys.exit()
-
-    transaction = TxGen.GenSingleTx(p, q, g, alpha, beta)
+    
+    transaction=TxGen.GenSingleTx(p, q, g, alpha, beta)
     TxFile = open("SingleTransaction.txt", "w")
     TxFile.write(transaction)
     TxFile.close()
     print "Transaction is written into SingleTransaction.txt"
+
+# Read a transaction from a file and validate it
+if TxTestOn:
+    if os.path.exists("SingleTransaction.txt") == True:
+        txFile = open('SingleTransaction.txt', 'r')
+        lines = txFile.readlines()
+        SignedPart = "".join(lines[0:len(lines)-2])
+        tmp = lines[5]
+        p = int(tmp[3:])
+        tmp = lines[6]
+        q = int(tmp[3:])
+        tmp = lines[7]
+        g = int(tmp[3:])
+        tmp = lines[8]
+        beta = int(tmp[19:])
+        tmp = lines[9]
+        r = int(tmp[15:])
+        tmp = lines[10]
+        s = int(tmp[15:])
+        if DSA.SignVer(SignedPart, r, s, p, q, g, beta)==1:
+            print "Signature verifies:))"
+        else:
+            print "Signature does not verify:(("
+            sys.exit()
+    else:
+        print 'SingleTransaction.txt does not exist'
+        sys.exit()
