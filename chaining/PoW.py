@@ -3,8 +3,8 @@
 """
 import os
 import sys
-import string
-from random import randint, choice
+from collections import deque
+from random import randint
 import hashlib
 if sys.version_info < (3, 6):
     import sha3
@@ -31,11 +31,18 @@ def _get_merkle_root_hash(blockpath, TxLen):
     with open(blockpath) as _file:
         lines = _file.readlines()
         transaction_len = len(lines) / TxLen
-        for i in range(transaction_len):
+        for i in xrange(transaction_len):
             transaction = "".join(lines[i*TxLen:i*TxLen+TxLen])
             transactions_hashes.append(hashlib.sha3_256(transaction).hexdigest())
-    print transactions_hashes
-
+    transactions_hashes = deque(transactions_hashes)
+    _len = len(transactions_hashes)
+    while _len > 1:
+        a = transactions_hashes.popleft()
+        b = transactions_hashes.popleft()
+        val = hashlib.sha3_256(a + b).hexdigest()
+        transactions_hashes.append(val)
+        _len = len(transactions_hashes)
+    return transactions_hashes.pop()
 
 
 def PoW(TxBlockFile, ChainFile, PoWLen, TxLen):
@@ -46,11 +53,11 @@ def PoW(TxBlockFile, ChainFile, PoWLen, TxLen):
     if not os.path.exists(ChainFile) or not os.path.isfile(ChainFile):
         prev_pow = 'Day Zero Link in the Chain'
     else:
-        prev_pow = _get_last_line(ChainFile)
+        prev_pow = _get_last_line(ChainFile)[:-1]
     root_hash = _get_merkle_root_hash(TxBlockFile, TxLen)
     while True:
-        nonce = randint(nonce_lb, nonce_ub)
-        cur_pow = hashlib.sha3_256('\n'.join((prev_pow, root_hash, nonce))).hexdigest()
+        nonce = str(randint(nonce_lb, nonce_ub))
+        cur_pow = hashlib.sha3_256('\n'.join((prev_pow, root_hash, nonce, ''))).hexdigest()
         if cur_pow[0:PoWLen] == '0' * PoWLen:
             break
     with open(ChainFile, 'a+') as cf:

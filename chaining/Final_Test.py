@@ -7,9 +7,9 @@ import hashlib
 from signature import DSA
 import TxBlockGen, PoW
 
-TxBlocksGenOn = 1 # set to 1 if you want to generate a block of bitcoin transaction
+TxBlocksGenOn = 0 # set to 1 if you want to generate a block of bitcoin transaction
 PoWGenOn = 0         # set to 1 if you want to provide PoW for given transaction blocks
-BlockChainTestOn = 0 # set ot 1 if you want to validate the block chain
+BlockChainTestOn = 1 # set ot 1 if you want to validate the block chain
 ValidateTxOn = 0     # set to 1 if you want to validate a transaction
 
 blockCount = 3 # number of link in the block chain (you can change)
@@ -78,8 +78,8 @@ if BlockChainTestOn:
                 sys.exit()
             PoW = blocks[(i+1)*LinkLen-1][:-1]
             if PoW != hashlib.sha3_256("".join(blocks[i*LinkLen:(i+1)*LinkLen-1])).hexdigest():
-                 print "Block chain does not validate:(("
-                 sys.exit()
+                print "Block chain does not validate:(("
+                sys.exit()
             if PoW[0:PoWLen] != "0"*PoWLen:
                 print "Invalid proof of work:(("
                 sys.exit()     
