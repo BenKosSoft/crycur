@@ -4,12 +4,13 @@ import warnings
 import sys, os
 import pyprimes
 import hashlib
-import DSA, TxBlockGen, PoW
+from signature import DSA
+import TxBlockGen, PoW
 
-TxBlocksGenOn = 0    # set to 1 if you want to generate a block of bitcoin transaction
+TxBlocksGenOn = 1 # set to 1 if you want to generate a block of bitcoin transaction
 PoWGenOn = 0         # set to 1 if you want to provide PoW for given transaction blocks
 BlockChainTestOn = 0 # set ot 1 if you want to validate the block chain
-ValidateTxOn = 1     # set to 1 if you want to validate a transaction 
+ValidateTxOn = 0     # set to 1 if you want to validate a transaction
 
 blockCount = 3 # number of link in the block chain (you can change)
 TxCount = 8    # number of transactions in a block (you can change, but set it to a power of two)

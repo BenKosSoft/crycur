@@ -25,8 +25,16 @@ def _get_last_line(fpath):
             pass
 
 
-def _get_merkle_root_hash(blockpath):
-    pass
+def _get_merkle_root_hash(blockpath, TxLen):
+    transactions_hashes = []
+    with open(blockpath) as _file:
+        lines = _file.readlines()
+        transaction_len = len(lines) / TxLen
+        for i in range(transaction_len):
+            transaction = "".join(lines[i*TxLen:i*TxLen+TxLen])
+            transactions_hashes.append(hashlib.sha3_256(transaction).hexdigest())
+    print transactions_hashes
+
 
 
 def PoW(TxBlockFile, ChainFile, PoWLen, TxLen):
@@ -39,4 +47,3 @@ def PoW(TxBlockFile, ChainFile, PoWLen, TxLen):
             prev_pow = 'Day Zero Link in the Chain'
         else:
             prev_pow
-
