@@ -93,19 +93,20 @@ def KeyGen(p, q, g):
 
 
 def SignGen(msg, p, q, g, alpha, beta):
-    msg_hash = int(hashlib.sha3_256(msg).hexdigest(), 16) % p
+    msg_hash = int(hashlib.sha3_256(msg).hexdigest(), 16) % q
     k = randint(1, q - 1)
-    r = pow(g, k, p)
+    r = pow(g, k, p) % q
     s = (alpha * r + k * msg_hash) % q
     return r, s
 
 
 def SignVer(msg, r, s, p, q, g, beta):
-    msg_hash = int(hashlib.sha3_256(msg).hexdigest(), 16) % p
+    msg_hash = int(hashlib.sha3_256(msg).hexdigest(), 16) % q
     v = _multiplicative_inverse(msg_hash, q)
     z1 = (s * v) % q
     z2 = ((q - r) * v) % q
     u = (pow(g, z1, p) * pow(beta, z2, p)) % p
+    u = u % q
     return r == u
 
 
