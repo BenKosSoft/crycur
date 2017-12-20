@@ -21,8 +21,9 @@ def _num_lines(path):
 def _get_last_line(fpath):
     line = ''
     with open(fpath) as f:
-        for l in f:
+        for line in f:
             pass
+    return line
 
 
 def _get_merkle_root_hash(blockpath):
@@ -33,10 +34,17 @@ def PoW(TxBlockFile, ChainFile, PoWLen, TxLen):
     if not os.path.exists(TxBlockFile) or not os.path.isfile(TxBlockFile):
         raise ValueError('TxBlockFile: given path does not exist or not a file')
 
-    with open(TxBlockFile) as tbf:
-        nonce_lb, nonce_ub = 1 << (128 - 1), (1 << 128) - 1
-        if not os.path.exists(ChainFile) or not os.path.isfile(ChainFile):
-            prev_pow = 'Day Zero Link in the Chain'
-        else:
-            prev_pow
-
+    nonce_lb, nonce_ub = 1 << (128 - 1), (1 << 128) - 1
+    if not os.path.exists(ChainFile) or not os.path.isfile(ChainFile):
+        prev_pow = 'Day Zero Link in the Chain'
+    else:
+        prev_pow = _get_last_line(ChainFile)
+    root_hash = _get_merkle_root_hash(TxBlockFile, TxLen)
+    while True:
+        nonce = randint(nonce_lb, nonce_ub)
+        cur_pow = hashlib.sha3_256('\n'.join((prev_pow, root_hash, nonce))).hexdigest()
+        if cur_pow[0:PoWLen] == '0' * PoWLen:
+            break
+    with open(ChainFile, 'a+') as cf:
+        cf.write('\n'.join((prev_pow, root_hash, nonce, cur_pow, '')))
+        cf.flush()
