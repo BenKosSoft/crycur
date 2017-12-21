@@ -20,8 +20,8 @@ def GenTxBlock(p, q, g, count):
         signed_part += "p: " + str(p) + "\n"
         signed_part += "q: " + str(q) + "\n"
         signed_part += "g: " + str(g) + "\n"
-        alpha_payer, beta_payer = DSA.KeyGen(p, q, g)
-        alpha_payee, beta_payee = DSA.KeyGen(p, q, g)
+        alpha_payer, beta_payer = DSA.KeyGen(p, q, g, write_file=False)
+        alpha_payee, beta_payee = DSA.KeyGen(p, q, g, write_file=False)
         signed_part += "Payer Public Key (beta): " + str(beta_payer) + "\n"
         signed_part += "Payee Public Key (beta): " + str(beta_payee) + "\n"
         signed_part += "Amount: " + str(randint(_SATOSHI_LOWER, _SATOSHI_UPPER)) + " Satoshi\n"
