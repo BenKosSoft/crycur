@@ -5,6 +5,7 @@ import os
 import sys
 import PoW
 import TxBlockGen
+from multiprocessing import freeze_support
 
 blockCount = 2001  # number of link in the block chain (you can change)
 TxCount = 8  # number of transactions in a block (you can change, but set it to a power of two)
@@ -18,6 +19,7 @@ block_prefix = 'TransactionBlock'
 block_filename_template = block_prefix + '%d.txt'
 dsa_param_file = 'DSA_params.txt'
 chain_file_name = "LongestChain.txt"
+num_processes = 4
 
 
 def create_blocks(start=0):
@@ -67,7 +69,7 @@ def mine():
             is_block_calculated = False
             tx_block_file_name = file_name % i
             if os.path.exists(tx_block_file_name):
-                PoW.PoW(tx_block_file_name, chain_file_name, PoWLen, TxLen)
+                PoW.PoW(tx_block_file_name, chain_file_name, PoWLen, TxLen, num_processes=num_processes)
                 is_block_calculated = True
                 print "#%d Proof of work is written/appended to" % i, chain_file_name
             else:
@@ -93,6 +95,7 @@ def mine():
 
 
 if __name__ == '__main__':
+    freeze_support()
     should_create = True
 
     relative_block_dir = os.path.join('.', block_dir)

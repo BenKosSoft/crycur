@@ -3,6 +3,7 @@
 """
 import os
 import sys
+from multiprocessing import Process, Queue
 from collections import deque
 from random import randint
 import hashlib
@@ -45,7 +46,19 @@ def _get_merkle_root_hash(blockpath, TxLen):
     return transactions_hashes.pop()
 
 
-def PoW(TxBlockFile, ChainFile, PoWLen, TxLen):
+def _find_fitting_hash(multi_q, nonce_lb, nonce_ub, prev_pow, root_hash, PoWLen):
+    try:
+        while True:
+            nonce = str(randint(nonce_lb, nonce_ub))
+            cur_pow = hashlib.sha3_256('\n'.join((prev_pow, root_hash, nonce, ''))).hexdigest()
+            if cur_pow[0:PoWLen] == '0' * PoWLen:
+                multi_q.put((nonce, cur_pow))
+                break
+    except KeyboardInterrupt:
+        multi_q.put((None, None))
+
+
+def PoW(TxBlockFile, ChainFile, PoWLen, TxLen, num_processes=1):
     if not os.path.exists(TxBlockFile) or not os.path.isfile(TxBlockFile):
         raise ValueError('TxBlockFile: given path does not exist or not a file')
 
@@ -55,11 +68,20 @@ def PoW(TxBlockFile, ChainFile, PoWLen, TxLen):
     else:
         prev_pow = _get_last_line(ChainFile)[:-1]
     root_hash = _get_merkle_root_hash(TxBlockFile, TxLen)
-    while True:
-        nonce = str(randint(nonce_lb, nonce_ub))
-        cur_pow = hashlib.sha3_256('\n'.join((prev_pow, root_hash, nonce, ''))).hexdigest()
-        if cur_pow[0:PoWLen] == '0' * PoWLen:
-            break
+
+    processes = []
+    multi_q = Queue()
+    for i in xrange(num_processes):
+        processes.append(Process(target=_find_fitting_hash,
+                                 args=(multi_q, nonce_lb, nonce_ub, prev_pow, root_hash, PoWLen)))
+        processes[i].start()
+
+    nonce, cur_pow = multi_q.get()
+    # terminate processes and clear queue
+    for p in processes:
+        p.terminate()
+    while not multi_q.empty():
+        multi_q.get()
     with open(ChainFile, 'a+') as cf:
         cf.write('\n'.join((prev_pow, root_hash, nonce, cur_pow, '')))
         cf.flush()
