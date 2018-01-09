@@ -1,7 +1,7 @@
 # Implementing Cryptocurrency with Block Chains
 
 &nbsp;&nbsp;&nbsp;&nbsp;
-In cryptocurrency systems, miners approve transactions by running the proof-of-work (PoW) algorithm
+In cryptocurrency systems, miners approve transactions by running the proof-of-work (calculate_pow) algorithm
 
 **Implemented by:**
 
@@ -29,4 +29,4 @@ Payee is randomized 10 character string.
 Satoshi Amount is randomized between 10 and 500.
 Nonce is also 128-bit uniformly random integer.
 Proof of Work is the hash value of the previous lines, 
-and nonce is generated randomly until first 6 characters of PoW is 0.
+and nonce is generated randomly until first 6 characters of calculate_pow is 0.

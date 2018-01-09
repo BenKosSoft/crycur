@@ -11,7 +11,7 @@ _SATOSHI_LOWER = 10
 _SATOSHI_UPPER = 500
 
 
-def GenTxBlock(p, q, g, count):
+def gen_tx_block(p, q, g, count):
     transaction = ""
     for _ in range(count):
         signed_part = ""
@@ -20,12 +20,12 @@ def GenTxBlock(p, q, g, count):
         signed_part += "p: " + str(p) + "\n"
         signed_part += "q: " + str(q) + "\n"
         signed_part += "g: " + str(g) + "\n"
-        alpha_payer, beta_payer = DSA.KeyGen(p, q, g, write_file=False)
-        alpha_payee, beta_payee = DSA.KeyGen(p, q, g, write_file=False)
+        alpha_payer, beta_payer = DSA.key_gen(p, q, g, write_file=False)
+        alpha_payee, beta_payee = DSA.key_gen(p, q, g, write_file=False)
         signed_part += "Payer Public Key (beta): " + str(beta_payer) + "\n"
         signed_part += "Payee Public Key (beta): " + str(beta_payee) + "\n"
         signed_part += "Amount: " + str(randint(_SATOSHI_LOWER, _SATOSHI_UPPER)) + " Satoshi\n"
-        r, s = DSA.SignGen(signed_part, p, q, g, alpha_payer, beta_payer)
+        r, s = DSA.sign_gen(signed_part, p, q, g, alpha_payer, beta_payer)
         transaction += signed_part + "Signature (r): " + str(r) + "\n"
         transaction += "Signature (s): " + str(s) + "\n"
     return transaction

@@ -9,7 +9,7 @@ from multiprocessing import freeze_support
 
 blockCount = 2001  # number of link in the block chain (you can change)
 TxCount = 8  # number of transactions in a block (you can change, but set it to a power of two)
-PoWLen = 6  # the number of 0s in PoW (you can change)
+PoWLen = 6  # the number of leading 0s in proof of work (you can change)
 TxLen = 10  # no of lines in a transaction (do not change)
 LinkLen = 4  # no of lines in a link of the chain (do not change)
 
@@ -44,7 +44,7 @@ def create_blocks(start=0):
         pass
 
     for j in range(start, blockCount):
-        transaction = TxBlockGen.GenTxBlock(p, q, g, TxCount)
+        transaction = TxBlockGen.gen_tx_block(p, q, g, TxCount)
         tx_block_file_name = file_name % j
         with open(tx_block_file_name, "w") as tbf:
             tbf.write(transaction)
@@ -69,7 +69,7 @@ def mine():
             is_block_calculated = False
             tx_block_file_name = file_name % i
             if os.path.exists(tx_block_file_name):
-                PoW.PoW(tx_block_file_name, chain_file_name, PoWLen, TxLen, num_processes=num_processes)
+                PoW.calculate_pow(tx_block_file_name, chain_file_name, PoWLen, TxLen, num_processes=num_processes)
                 is_block_calculated = True
                 print "#%d Proof of work is written/appended to" % i, chain_file_name
             else:

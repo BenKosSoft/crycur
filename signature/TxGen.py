@@ -15,7 +15,7 @@ def create_random_string(n):
     return ''.join(choice(string.ascii_uppercase + string.digits) for _ in range(n))
 
 
-def GenSingleTx(p, q, g, alpha, beta):
+def gen_single_tx(p, q, g, alpha, beta):
     _LOWER = 1 << 127
     _UPPER = (1 << 128) - 1
     _SATOSHI_LOWER = 10
@@ -31,11 +31,10 @@ def GenSingleTx(p, q, g, alpha, beta):
     g_transaction = "g: " + str(g) + "\n"
     public_key_beta = "Public Key (beta): " + str(beta) + "\n"
 
-    transaction_without_sign = meta + serial_number + payer + payee + \
-                               amount + p_transaction + q_transaction + \
-                               g_transaction + public_key_beta
+    transaction_without_sign = meta + serial_number + payer + payee + amount + \
+        p_transaction + q_transaction + g_transaction + public_key_beta
 
-    r, s = DSA.SignGen(transaction_without_sign, p, q, g, alpha, beta)
+    r, s = DSA.sign_gen(transaction_without_sign, p, q, g, alpha, beta)
 
     sign_r = "Signature (r): " + str(r) + "\n"
     sign_s = "Signature (s): " + str(s) + "\n"

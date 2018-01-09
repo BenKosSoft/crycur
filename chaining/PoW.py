@@ -27,13 +27,13 @@ def _get_last_line(fpath):
     return line
 
 
-def _get_merkle_root_hash(blockpath, TxLen):
+def _get_merkle_root_hash(block_path, tx_len):
     transactions_hashes = []
-    with open(blockpath) as _file:
+    with open(block_path) as _file:
         lines = _file.readlines()
-        transaction_len = len(lines) / TxLen
+        transaction_len = len(lines) / tx_len
         for i in xrange(transaction_len):
-            transaction = "".join(lines[i*TxLen:i*TxLen+TxLen])
+            transaction = "".join(lines[i*tx_len:i*tx_len+tx_len])
             transactions_hashes.append(hashlib.sha3_256(transaction).hexdigest())
     transactions_hashes = deque(transactions_hashes)
     _len = len(transactions_hashes)
@@ -46,34 +46,34 @@ def _get_merkle_root_hash(blockpath, TxLen):
     return transactions_hashes.pop()
 
 
-def _find_fitting_hash(multi_q, nonce_lb, nonce_ub, prev_pow, root_hash, PoWLen):
+def _find_fitting_hash(multi_q, nonce_lb, nonce_ub, prev_pow, root_hash, pow_len):
     try:
         while True:
             nonce = str(randint(nonce_lb, nonce_ub))
             cur_pow = hashlib.sha3_256('\n'.join((prev_pow, root_hash, nonce, ''))).hexdigest()
-            if cur_pow[0:PoWLen] == '0' * PoWLen:
+            if cur_pow[0:pow_len] == '0' * pow_len:
                 multi_q.put((nonce, cur_pow))
                 break
     except KeyboardInterrupt:
         multi_q.put((None, None))
 
 
-def PoW(TxBlockFile, ChainFile, PoWLen, TxLen, num_processes=1):
-    if not os.path.exists(TxBlockFile) or not os.path.isfile(TxBlockFile):
-        raise ValueError('TxBlockFile: given path does not exist or not a file')
+def calculate_pow(tx_block_file, chain_file, pow_len, tx_len, num_processes=1):
+    if not os.path.exists(tx_block_file) or not os.path.isfile(tx_block_file):
+        raise ValueError('tx_block_file: given path does not exist or not a file')
 
     nonce_lb, nonce_ub = 1 << (128 - 1), (1 << 128) - 1
-    if not os.path.exists(ChainFile) or not os.path.isfile(ChainFile):
+    if not os.path.exists(chain_file) or not os.path.isfile(chain_file):
         prev_pow = 'Day Zero Link in the Chain'
     else:
-        prev_pow = _get_last_line(ChainFile)[:-1]
-    root_hash = _get_merkle_root_hash(TxBlockFile, TxLen)
+        prev_pow = _get_last_line(chain_file)[:-1]
+    root_hash = _get_merkle_root_hash(tx_block_file, tx_len)
 
     processes = []
     multi_q = Queue()
     for i in xrange(num_processes):
         processes.append(Process(target=_find_fitting_hash,
-                                 args=(multi_q, nonce_lb, nonce_ub, prev_pow, root_hash, PoWLen)))
+                                 args=(multi_q, nonce_lb, nonce_ub, prev_pow, root_hash, pow_len)))
         processes[i].start()
 
     nonce, cur_pow = multi_q.get()
@@ -82,6 +82,6 @@ def PoW(TxBlockFile, ChainFile, PoWLen, TxLen, num_processes=1):
         p.terminate()
     while not multi_q.empty():
         multi_q.get()
-    with open(ChainFile, 'a+') as cf:
+    with open(chain_file, 'a+') as cf:
         cf.write('\n'.join((prev_pow, root_hash, nonce, cur_pow, '')))
         cf.flush()
