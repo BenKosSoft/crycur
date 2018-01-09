@@ -52,7 +52,7 @@ if ParamGenOn:
     small_bound = 256
     large_bound = 2048
 
-    q, p, g = DSA.DL_Param_Generator(small_bound, large_bound)
+    q, p, g = DSA.dl_param_generator(small_bound, large_bound)
 
     outf = open('DSA_params.txt', 'w')
     outf.write(str(q))
@@ -110,7 +110,7 @@ if KeyGenOn:
             print 'DSA_params.txt does not exist'
             sys.exit()
             
-    (alpha, beta) = DSA.KeyGen(p, q, g)
+    (alpha, beta) = DSA.key_gen(p, q, g)
     outf = open('DSA_skey.txt', 'w')
     outf.write(str(q)+"\n")
     outf.write(str(p)+"\n")
@@ -180,12 +180,12 @@ if SignTestOn:
     # pick a random message (string)
     m = random_string(random.randint(1,100))
     print "message: ", m
-    (r, s) = DSA.SignGen(m, p, q, g, alpha, beta)
+    (r, s) = DSA.sign_gen(m, p, q, g, alpha, beta)
     print "Signature:"
     print "r: ", r
     print "s: ", s
 
-    if DSA.SignVer(m, r, s, p, q, g, beta)==1:
+    if DSA.sign_ver(m, r, s, p, q, g, beta)==1:
         print "Signature verifies:))"
     else:
         print "Signature does not verify:(("
@@ -213,7 +213,7 @@ if TxGenOn:
             print 'DSA_skey.txt or DSA_pkey.txt does not exist'
             sys.exit()
     
-    transaction=TxGen.GenSingleTx(p, q, g, alpha, beta)
+    transaction=TxGen.gen_single_tx(p, q, g, alpha, beta)
     TxFile = open("SingleTransaction.txt", "w")
     TxFile.write(transaction)
     TxFile.close()
@@ -237,7 +237,7 @@ if TxTestOn:
         r = int(tmp[15:])
         tmp = lines[10]
         s = int(tmp[15:])
-        if DSA.SignVer(SignedPart, r, s, p, q, g, beta)==1:
+        if DSA.sign_ver(SignedPart, r, s, p, q, g, beta)==1:
             print "Signature verifies:))"
         else:
             print "Signature does not verify:(("

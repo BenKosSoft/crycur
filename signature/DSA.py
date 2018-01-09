@@ -44,7 +44,7 @@ def _multiplicative_inverse(num, modulo):
     return t if t > 0 else t + modulo
 
 
-def DL_Param_Generator(small_bound, large_bound):
+def dl_param_generator(small_bound, large_bound, write_file=True):
     # generate q
     small_bound, large_bound = len(bin(small_bound)) - 3, len(bin(large_bound)) - 3
     small_lb, small_ub = 1 << (small_bound - 1), (1 << small_bound) - 1
@@ -72,27 +72,27 @@ def DL_Param_Generator(small_bound, large_bound):
             break
 
     # Writing to file
-    with open("DSA_params.txt", 'w') as _file:
-        _file.write(str(q) + "\n")
-        _file.write(str(p) + "\n")
-        _file.write(str(g))
+    if write_file:
+        with open("DSA_params.txt", 'w') as _file:
+            _file.write(str(q) + "\n")
+            _file.write(str(p) + "\n")
+            _file.write(str(g))
 
     return q, p, g
 
 
-def KeyGen(p, q, g):
+def key_gen(p, q, g, write_file=True):
     alpha = randint(1, q - 1)
     beta = pow(g, alpha, p)
-    with open('DSA_skey.txt', 'w') as f:
-        f.write('%(q)d\n%(p)d\n%(g)d\n%(alpha)d\n'
-                % {'q': q, 'p': p, 'g': g, 'alpha': alpha})
-    with open('DSA_pkey.txt', 'w') as f:
-        f.write('%(q)d\n%(p)d\n%(g)d\n%(beta)d\n'
-                % {'q': q, 'p': p, 'g': g, 'beta': beta})
+    if write_file:
+        with open('DSA_skey.txt', 'w') as f:
+            f.write('%(q)d\n%(p)d\n%(g)d\n%(alpha)d\n' % {'q': q, 'p': p, 'g': g, 'alpha': alpha})
+        with open('DSA_pkey.txt', 'w') as f:
+            f.write('%(q)d\n%(p)d\n%(g)d\n%(beta)d\n' % {'q': q, 'p': p, 'g': g, 'beta': beta})
     return alpha, beta
 
 
-def SignGen(msg, p, q, g, alpha, beta):
+def sign_gen(msg, p, q, g, alpha, beta):
     msg_hash = int(hashlib.sha3_256(msg).hexdigest(), 16) % q
     k = randint(1, q - 1)
     r = pow(g, k, p) % q
@@ -100,7 +100,7 @@ def SignGen(msg, p, q, g, alpha, beta):
     return r, s
 
 
-def SignVer(msg, r, s, p, q, g, beta):
+def sign_ver(msg, r, s, p, q, g, beta):
     msg_hash = int(hashlib.sha3_256(msg).hexdigest(), 16) % q
     v = _multiplicative_inverse(msg_hash, q)
     z1 = (s * v) % q
@@ -110,7 +110,7 @@ def SignVer(msg, r, s, p, q, g, beta):
     return r == u
 
 
-def SignVerFromFile(filename):
+def sign_ver_from_file(filename):
     if os.path.exists(filename):
         with open(filename) as _file:
             lines = _file.readlines()
@@ -121,7 +121,7 @@ def SignVerFromFile(filename):
             beta = long(lines[8][19:])
             r = long(lines[9][15:])
             s = long(lines[10][15:])
-        if SignVer(signed_part, r, s, p, q, g, beta):
+        if sign_ver(signed_part, r, s, p, q, g, beta):
             print "Signature is valid!"
         else:
             print "Signature is not valid!"
