@@ -19,9 +19,9 @@ def _num_lines(path):
     return i + 1
 
 
-def _get_last_line(fpath):
+def _get_last_line(path):
     line = ''
-    with open(fpath) as f:
+    with open(path) as f:
         for line in f:
             pass
     return line

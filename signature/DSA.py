@@ -73,7 +73,7 @@ def dl_param_generator(small_bound, large_bound, write_file=True):
 
     # Writing to file
     if write_file:
-        with open("DSA_params.txt", 'w') as _file:
+        with open("DSA_params.txt", 'wb') as _file:
             _file.write(str(q) + "\n")
             _file.write(str(p) + "\n")
             _file.write(str(g))
@@ -85,9 +85,9 @@ def key_gen(p, q, g, write_file=True):
     alpha = randint(1, q - 1)
     beta = pow(g, alpha, p)
     if write_file:
-        with open('DSA_skey.txt', 'w') as f:
+        with open('DSA_skey.txt', 'wb') as f:
             f.write('%(q)d\n%(p)d\n%(g)d\n%(alpha)d\n' % {'q': q, 'p': p, 'g': g, 'alpha': alpha})
-        with open('DSA_pkey.txt', 'w') as f:
+        with open('DSA_pkey.txt', 'wb') as f:
             f.write('%(q)d\n%(p)d\n%(g)d\n%(beta)d\n' % {'q': q, 'p': p, 'g': g, 'beta': beta})
     return alpha, beta
 
