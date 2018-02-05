@@ -11,7 +11,7 @@ _SATOSHI_LOWER = 10
 _SATOSHI_UPPER = 500
 
 
-def gen_tx_block(p, q, g, count):
+def gen_tx_block(p, q, g, count, filename=None):
     transaction = ""
     for _ in range(count):
         signed_part = ""
@@ -28,4 +28,10 @@ def gen_tx_block(p, q, g, count):
         r, s = DSA.sign_gen(signed_part, p, q, g, alpha_payer, beta_payer)
         transaction += signed_part + "Signature (r): " + str(r) + "\n"
         transaction += "Signature (s): " + str(s) + "\n"
+
+    # write to file
+    if filename is not None:
+        with open(filename, "wb") as tbf:
+            tbf.write(transaction)
+            tbf.flush()
     return transaction

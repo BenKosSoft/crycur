@@ -6,16 +6,17 @@ import errno
 import sys
 import argparse
 import ConfigParser
-from multiprocessing import freeze_support
+from itertools import izip, repeat
+from multiprocessing import freeze_support, cpu_count, Pool
 
 from chaining import PoW, TxBlockGen
 from signature import DSA
 
-blockCount = 2001  # number of link in the block chain (you can change)
-TxCount = 8  # number of transactions in a block (you can change, but set it to a power of two)
-PoWLen = 6  # the number of leading 0s in proof of work (you can change)
-TxLen = 10  # no of lines in a transaction (do not change)
-LinkLen = 4  # no of lines in a link of the chain (do not change)
+block_count = 200  # number of link in the block chain (you can change)
+tx_count = 8  # number of transactions in a block (you can change, but set it to a power of two)
+pow_len = 6  # the number of leading 0s in proof of work (you can change)
+tx_len = 10  # no of lines in a transaction (do not change)
+link_len = 4  # no of lines in a link of the chain (do not change)
 
 log_file = '.crylog'  # not change
 block_dir = './blocks/'
@@ -24,6 +25,10 @@ block_filename_template = block_prefix + '-%d.block'
 dsa_param_file = 'DSA_params.txt'
 chain_file_name = "LongestChain.txt"
 num_processes = 4
+
+
+def _gen_tx_block_zipped(args):
+    return TxBlockGen.gen_tx_block(*args)
 
 
 def create_blocks(start=0):
@@ -37,8 +42,10 @@ def create_blocks(start=0):
             g = int(inf.readline())
         print "DSA parameters are read from file", dsa_param_file
     else:
-        print 'DSA parameter file not found! Generating....'
+        sys.stdout.write('DSA parameter file not found! Generating....')
+        sys.stdout.flush()
         DSA.dl_param_generator(256, 2048, True)
+        sys.stdout.write(' done\n')
         return create_blocks(start)
 
     file_name = os.path.join(block_dir, block_filename_template)
@@ -48,13 +55,15 @@ def create_blocks(start=0):
         if e.errno != errno.EEXIST:
             raise
 
-    for j in xrange(start, blockCount):
-        transaction = TxBlockGen.gen_tx_block(p, q, g, TxCount)
-        tx_block_file_name = file_name % j
-        with open(tx_block_file_name, "wb") as tbf:
-            tbf.write(transaction)
-            tbf.flush()
-        print "Transaction block %d is written into %s.txt" % (j, tx_block_file_name)
+    sys.stdout.write('Generating %d missing transaction blocks...' % (block_count - start))
+    sys.stdout.flush()
+    pool = Pool(processes=num_processes)
+    pool.imap_unordered(_gen_tx_block_zipped, izip(repeat(p), repeat(q), repeat(g), repeat(tx_count),
+                                                   [file_name % j for j in xrange(start, block_count)]),
+                        chunksize=50)
+    pool.close()
+    pool.join()
+    sys.stdout.write(' done\n')
 
 
 def mine():
@@ -70,11 +79,11 @@ def mine():
                 start = int(log.read())
         print 'Starting from', start
         file_name = os.path.join(block_dir, block_filename_template)
-        for i in range(start, blockCount):
+        for i in range(start, block_count):
             is_block_calculated = False
             tx_block_file_name = file_name % i
             if os.path.exists(tx_block_file_name):
-                PoW.calculate_pow(tx_block_file_name, chain_file_name, PoWLen, TxLen, num_processes=num_processes)
+                PoW.calculate_pow(tx_block_file_name, chain_file_name, pow_len, tx_len, num_processes=num_processes)
                 is_block_calculated = True
                 print "#%d Proof of work is written/appended to" % i, chain_file_name
             else:
@@ -89,6 +98,7 @@ def mine():
                         sys.exit()
     except KeyboardInterrupt:
         sys.stdout.write('Keyboard Interrupt. Logging...')
+        sys.stdout.flush()
         with open(log_file, 'wb') as log:
             if not is_block_calculated:
                 log.write(str(i))
@@ -107,9 +117,9 @@ if __name__ == '__main__':
     if os.path.exists(block_dir) and os.path.isdir(block_dir):
         existing_block_cnt = sum(1 for f in os.listdir(block_dir)
                                  if os.path.isfile(os.path.join(block_dir, f)) and f.startswith(block_prefix))
-        if blockCount <= existing_block_cnt:
+        if block_count <= existing_block_cnt:
             should_create = False
     if should_create:
         create_blocks(existing_block_cnt)
 
-    mine()
+    # mine()
