@@ -152,3 +152,9 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
+
+## Cryptocurrency specific files...
+**/.crylog
+blocks/
+*.chain
+*.dsa

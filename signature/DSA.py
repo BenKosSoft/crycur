@@ -44,7 +44,7 @@ def _multiplicative_inverse(num, modulo):
     return t if t > 0 else t + modulo
 
 
-def dl_param_generator(small_bound, large_bound, write_file=True):
+def dl_param_generator(small_bound, large_bound, filepath=None):
     # generate q
     small_bound, large_bound = len(bin(small_bound)) - 3, len(bin(large_bound)) - 3
     small_lb, small_ub = 1 << (small_bound - 1), (1 << small_bound) - 1
@@ -72,8 +72,8 @@ def dl_param_generator(small_bound, large_bound, write_file=True):
             break
 
     # Writing to file
-    if write_file:
-        with open("DSA_params.txt", 'w') as _file:
+    if filepath is not None:
+        with open(str(filepath), 'wb') as _file:
             _file.write(str(q) + "\n")
             _file.write(str(p) + "\n")
             _file.write(str(g))
@@ -85,9 +85,9 @@ def key_gen(p, q, g, write_file=True):
     alpha = randint(1, q - 1)
     beta = pow(g, alpha, p)
     if write_file:
-        with open('DSA_skey.txt', 'w') as f:
+        with open('DSA_skey.txt', 'wb') as f:
             f.write('%(q)d\n%(p)d\n%(g)d\n%(alpha)d\n' % {'q': q, 'p': p, 'g': g, 'alpha': alpha})
-        with open('DSA_pkey.txt', 'w') as f:
+        with open('DSA_pkey.txt', 'wb') as f:
             f.write('%(q)d\n%(p)d\n%(g)d\n%(beta)d\n' % {'q': q, 'p': p, 'g': g, 'beta': beta})
     return alpha, beta
 

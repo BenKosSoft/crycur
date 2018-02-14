@@ -7,6 +7,7 @@ from multiprocessing import Process, Queue
 from collections import deque
 from random import randint
 import hashlib
+
 if sys.version_info < (3, 6):
     import sha3
 
@@ -19,21 +20,21 @@ def _num_lines(path):
     return i + 1
 
 
-def _get_last_line(fpath):
+def _get_last_line(path):
     line = ''
-    with open(fpath) as f:
+    with open(path) as f:
         for line in f:
             pass
     return line
 
 
-def _get_merkle_root_hash(block_path, tx_len):
+def get_merkle_root_hash(block_path, tx_len):
     transactions_hashes = []
     with open(block_path) as _file:
         lines = _file.readlines()
         transaction_len = len(lines) / tx_len
         for i in xrange(transaction_len):
-            transaction = "".join(lines[i*tx_len:i*tx_len+tx_len])
+            transaction = "".join(lines[i * tx_len:i * tx_len + tx_len])
             transactions_hashes.append(hashlib.sha3_256(transaction).hexdigest())
     transactions_hashes = deque(transactions_hashes)
     _len = len(transactions_hashes)
@@ -67,7 +68,7 @@ def calculate_pow(tx_block_file, chain_file, pow_len, tx_len, num_processes=1):
         prev_pow = 'Day Zero Link in the Chain'
     else:
         prev_pow = _get_last_line(chain_file)[:-1]
-    root_hash = _get_merkle_root_hash(tx_block_file, tx_len)
+    root_hash = get_merkle_root_hash(tx_block_file, tx_len)
 
     processes = []
     multi_q = Queue()
@@ -82,6 +83,6 @@ def calculate_pow(tx_block_file, chain_file, pow_len, tx_len, num_processes=1):
         p.terminate()
     while not multi_q.empty():
         multi_q.get()
-    with open(chain_file, 'a+') as cf:
+    with open(chain_file, 'ab') as cf:
         cf.write('\n'.join((prev_pow, root_hash, nonce, cur_pow, '')))
         cf.flush()
