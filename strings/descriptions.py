@@ -3,8 +3,8 @@
 """
 
 # general descriptions
-intro = '%(prog)s can generate random transaction blocks for the block chain based cryptocurrency, can calculate proof'\
-        ' of works for the said blocks, and can validate the integrity of chain/blocks.'
+intro = '%(prog)s can generate random transaction blocks for the block chain based cryptocurrency, can calculate' \
+        ' proof of works for the said blocks, and can validate the integrity of chain/blocks.'
 examples = '''\
 Examples
 -----------------------------
@@ -17,7 +17,8 @@ python %(prog)s validate -ct              # Validates longest chain file and all
 '''
 
 # common prefix/suffixes
-_config_override = 'Overrides default settings and settings specified by "config --set".'
+_config_override = 'Overrides default settings and settings specified by "config --set". Execute "python %(prog)s' \
+                   'config --help" for more information about settings'
 _specify_path = 'Specify the path for '
 
 # common path/config switches
@@ -38,15 +39,15 @@ config_title = 'Sets/gets the defined values that will be used by other commands
 config_defaults = '''\
 Available options for setting
 -----------------------------
-num_processes    # Number of processors that will be used in the program. (default: all or 4 if not available)
-block_count      # Transaction block count to be mined. (default: infinite)
+num_processes    # Number of processors that will be used in the program. (default: 'all' or 4 if not available)
+block_count      # Transaction block count to be mined. (default: 'infinite')
 chunk_size       # Number of transaction blocks that are generated and mined in one step. (default: 100)
 tx_count         # Number of transactions in every transaction block (default: 8)
 pow_len          # Number of leading 0's in the proof of work hash (default: 6)
 block_dir        # Path to the the directory in which transaction blocks are present. (default: ./blocks)
 block_prefix     # Common prefix in file names of transaction block files. (default: TransactionBlock)
-dsa_param_file   # Path of the file that consists DSA parameters (default: ./DSA.params)
-chain_file       # Path of the file that consists the longest chain (default: ./Longest.chain)
+dsa_param_file   # Path of the file that consists DSA parameters (default: ./params.dsa)
+chain_file       # Path of the file that consists the longest chain (default: ./longest.chain)
 '''
 config_set = 'Sets the value for the given parameter'
 config_get = 'Retrieves the current value for given parameter'
@@ -54,23 +55,25 @@ config_reset = 'Reset the user defined values back to default settings.'
 
 # generate
 generate_title = 'Finds the most transaction with highest number, then creates specified number of transaction blocks' \
-                 'starting from that number.'
+                 ' starting from that number.'
 generate_d = 'Generates a DSA file with new DSA parameters, which will be used for newly generated transaction blocks'
 generate_b = 'Generates new transaction blocks. When used with "-d", first new DSA parameters will be generated then' \
-             'new transactions will use new DSA parameters'
+             ' new transactions will use new DSA parameters'
 generate_ignore = 'Ignores and overrides existing block files having the same name convention'
 generate_fill = 'Searches through the existing transaction blocks in the blocks directory and generates the missing' \
-                'transaction blocks'
-generate_count = 'Number of blocks to be generated.'
+                ' transaction blocks'
+generate_count = 'Number of blocks to be generated. Has no effect if "--fill_gaps" is defined'
 
 # mine
 mine_title = 'Calculates proof of work hashes of the transactions and records them to longest chain file.'
 mine_nogenerate = 'Does not generate new transaction blocks if number of blocks in blocks directory is not sufficient' \
-                  'for given block count for mining.'
+                  ' for given block count for mining.'
 mine_startfrom = 'Ignores the log file and starts the mining process from the given transaction number or next' \
-                 'smallest transaction number if given number does not exist.'
+                 ' smallest transaction number if given number does not exist.'
+mine_blockcount = 'Number of transaction blocks of which proof of works will be calculated.' \
+                  ' %(config_override)s' % {'config_override': _config_override}
 mine_chunksize = 'Number of transaction blocks that are generated and mined in one step. ' \
-                 '%(config_override)s' % {'config_override': config_defaults}
+                 ' %(config_override)s' % {'config_override': _config_override}
 
 # validate
 validate_title = 'Validates integrity of longest chain and transactions.'
