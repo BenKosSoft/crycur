@@ -135,7 +135,7 @@ def mine():
                 i = int(log.read())
         print 'Starting from', i
         file_name = os.path.join(blocks_dir, block_filename_template)
-        limit = i + mine_count if mine_count != 'infinite' else float('inf')
+        limit = i + mine_count
         while i < limit:
             tx_block_file_name = file_name % i
             if os.path.exists(tx_block_file_name):
@@ -375,7 +375,8 @@ if __name__ == '__main__':
 
     pow_len = configs.getint('USER', 'pow_len')
     chunk_size = configs.getint('USER', 'chunk_size')
-    mine_count = configs.get('USER', 'mine_count')
+    mine_count = float('inf') if configs.get('USER', 'mine_count') == 'infinite'\
+        else configs.getint('USER', 'mine_count')
     try:
         num_processes = cpu_count() if configs.get('USER', 'num_processes') == 'all' \
             else configs.getint('USER', 'num_processes')
