@@ -46,7 +46,7 @@ def _multiplicative_inverse(num, modulo):
 
 def dl_param_generator(small_bound, large_bound, filepath=None):
     # generate q
-    small_bound, large_bound = len(bin(small_bound)) - 3, len(bin(large_bound)) - 3
+    # small_bound, large_bound = len(bin(small_bound)) - 3, len(bin(large_bound)) - 3
     small_lb, small_ub = 1 << (small_bound - 1), (1 << small_bound) - 1
     while True:
         q = randint(small_lb, small_ub)

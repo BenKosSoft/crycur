@@ -7,7 +7,7 @@ import sys
 import argparse
 import ConfigParser
 import hashlib
-from itertools import izip, repeat, islice
+from itertools import izip, repeat, islice, cycle
 from multiprocessing import freeze_support, cpu_count, Pool
 
 from chaining import PoW, TxBlockGen
@@ -218,9 +218,9 @@ def validate():
     if cmd_args.transactions:
         is_valid = True
         with open(chain_file_name, 'r') as cfile:
-            block_count = sum(1 for _ in cfile) / tx_count
+            block_count = sum(1 for _ in cfile) / link_len
         pool = Pool(processes=num_processes)
-        for res in pool.imap_unordered(_validate_tx, izip(xrange(block_count), xrange(tx_count), repeat(configs)),
+        for res in pool.imap_unordered(_validate_tx, izip(xrange(block_count), cycle(xrange(tx_count)), repeat(configs)),
                                        chunksize=10):
             if res[0] == 1:
                 print 'Signature of the transaction does not verify. Block No:', res[1], 'Tx No:', res[2]
