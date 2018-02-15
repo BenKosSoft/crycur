@@ -7,7 +7,7 @@ import sys
 import argparse
 import ConfigParser
 import hashlib
-from itertools import izip, repeat, islice
+from itertools import izip, repeat, islice, cycle
 from multiprocessing import freeze_support, cpu_count, Pool
 
 from chaining import PoW, TxBlockGen
@@ -48,7 +48,7 @@ def _gen_tx_block_zipped(args):
     return TxBlockGen.gen_tx_block(*args)
 
 
-def generate(start=None, count=None, fill_gaps=None, gen_dsa=False, nobanner=False):
+def generate(gen_blocks=False, start=None, count=None, fill_gaps=None, gen_dsa=False, nobanner=False):
     # Generate DSA file
     if (hasattr(cmd_args, 'd') and cmd_args.d) or gen_dsa:
         sys.stdout.write('Generating DSA parameter file....')
@@ -62,60 +62,63 @@ def generate(start=None, count=None, fill_gaps=None, gen_dsa=False, nobanner=Fal
         sys.stdout.write(' done\n')
 
     # Generate Transaction blocks
-    if count is None:
-        count = cmd_args.count if hasattr(cmd_args, 'count') and cmd_args.count is not None else chunk_size
+    if (hasattr(cmd_args, 'b') and cmd_args.b) or gen_blocks:
+        if count is None:
+            count = cmd_args.count if hasattr(cmd_args, 'count') and cmd_args.count is not None else chunk_size
 
-    try:
-        os.makedirs(blocks_dir)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
+        try:
+            os.makedirs(blocks_dir)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
 
-    # Adjust transaction numbers to be generated
-    if (hasattr(cmd_args, 'fill_gaps') and cmd_args.fill_gaps) or fill_gaps:
-        existing = sorted([int(os.path.splitext(f)[0][len(block_prefix) + 1:]) for f in os.listdir(blocks_dir)
-                           if os.path.isfile(os.path.join(blocks_dir, f)) and f.startswith(block_prefix)])
-        to_be_generated = []
-        j = 0
-        for e in existing:
-            while j != e:
-                to_be_generated.append(j)
+        # Adjust transaction numbers to be generated
+        if (hasattr(cmd_args, 'fill_gaps') and cmd_args.fill_gaps) or fill_gaps:
+            existing = sorted([int(os.path.splitext(f)[0][len(block_prefix) + 1:]) for f in os.listdir(blocks_dir)
+                               if os.path.isfile(os.path.join(blocks_dir, f)) and f.startswith(block_prefix)])
+            to_be_generated = []
+            j = 0
+            for e in existing:
+                while j != e:
+                    to_be_generated.append(j)
+                    j = j + 1
                 j = j + 1
-            j = j + 1
-    else:
-        if start is None and cmd_args.ignore_existing:
-            start = 0
-        elif start is None:
-            block_files = [int(os.path.splitext(f)[0][len(block_prefix):]) for f in os.listdir(blocks_dir)
-                           if os.path.isfile(os.path.join(blocks_dir, f)) and f.startswith(block_prefix)]
-            start = 0 if not block_files else max(block_files) + 1
-        to_be_generated = xrange(start, start + count)
+        else:
+            if start is None and cmd_args.ignore_existing:
+                start = 0
+            elif start is None:
+                block_files = [int(os.path.splitext(f)[0][len(block_prefix):]) for f in os.listdir(blocks_dir)
+                               if os.path.isfile(os.path.join(blocks_dir, f)) and f.startswith(block_prefix)]
+                start = 0 if not block_files else max(block_files) + 1
+            to_be_generated = xrange(start, start + count)
 
-    if not nobanner:
-        print '=' * 70
-        print 'Starting creating blocks'
-        print '=' * 70
-    if os.path.exists(dsa_param_file):
-        with open(dsa_param_file, 'r') as inf:
-            q = int(inf.readline())
-            p = int(inf.readline())
-            g = int(inf.readline())
-        print "DSA parameters are read from file", dsa_param_file
-    else:
-        print 'DSA parameters file could not be found!'
-        return generate(start, count, fill_gaps, True, nobanner)
+        if not nobanner:
+            print '=' * 70
+            print 'Starting creating blocks'
+            print '=' * 70
 
-    file_name = os.path.join(blocks_dir, block_filename_template)
+        # Create blocks
+        if os.path.exists(dsa_param_file):
+            with open(dsa_param_file, 'r') as inf:
+                q = int(inf.readline())
+                p = int(inf.readline())
+                g = int(inf.readline())
+            print "DSA parameters are read from file", dsa_param_file
+        else:
+            print 'DSA parameters file could not be found!'
+            return generate(gen_blocks, start, count, fill_gaps, True, nobanner)
 
-    sys.stdout.write('Generating %d missing transaction blocks...' % len(to_be_generated))
-    sys.stdout.flush()
-    pool = Pool(processes=num_processes)
-    pool.imap_unordered(_gen_tx_block_zipped, izip(repeat(p), repeat(q), repeat(g), repeat(tx_count),
-                                                   [file_name % j for j in to_be_generated]),
-                        chunksize=10)
-    pool.close()
-    pool.join()
-    sys.stdout.write(' done\n')
+        file_name = os.path.join(blocks_dir, block_filename_template)
+
+        sys.stdout.write('Generating %d missing transaction blocks...' % len(to_be_generated))
+        sys.stdout.flush()
+        pool = Pool(processes=num_processes)
+        pool.imap_unordered(_gen_tx_block_zipped, izip(repeat(p), repeat(q), repeat(g), repeat(tx_count),
+                                                       [file_name % j for j in to_be_generated]),
+                            chunksize=10)
+        pool.close()
+        pool.join()
+        sys.stdout.write(' done\n')
 
 
 def mine():
@@ -124,7 +127,7 @@ def mine():
     print '=' * 70
     if not cmd_args.no_generate:
         print 'Filling transaction block gaps...'
-        generate(fill_gaps=True, nobanner=True)
+        generate(gen_blocks=True, fill_gaps=True, nobanner=True)
     i = 0
     try:
         if cmd_args.start_from is not None:
@@ -143,7 +146,7 @@ def mine():
                 print "#%d Proof of work is written/appended to" % i, chain_file_name
                 i = i + 1
             elif not cmd_args.no_generate:
-                generate(start=i, count=chunk_size, nobanner=True)
+                generate(gen_blocks=True, start=i, count=chunk_size, nobanner=True)
             else:
                 print "Error: ", tx_block_file_name, "does not exist. Logging and exiting..."
                 with open(log_file, 'wb') as log:
@@ -218,9 +221,9 @@ def validate():
     if cmd_args.transactions:
         is_valid = True
         with open(chain_file_name, 'r') as cfile:
-            block_count = sum(1 for _ in cfile) / tx_count
+            block_count = sum(1 for _ in cfile) / link_len
         pool = Pool(processes=num_processes)
-        for res in pool.imap_unordered(_validate_tx, izip(xrange(block_count), xrange(tx_count), repeat(configs)),
+        for res in pool.imap_unordered(_validate_tx, izip(xrange(block_count), cycle(xrange(tx_count)), repeat(configs)),
                                        chunksize=10):
             if res[0] == 1:
                 print 'Signature of the transaction does not verify. Block No:', res[1], 'Tx No:', res[2]
