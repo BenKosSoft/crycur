@@ -58,7 +58,7 @@ def generate(gen_blocks=False, start=None, count=None, fill_gaps=None, gen_dsa=F
             if e.errno != errno.EEXIST:
                 raise
         sys.stdout.flush()
-        DSA.dl_param_generator(256, 2048, dsa_param_file)
+        DSA.dl_param_generator(256, 2048, num_processes, dsa_param_file)
         sys.stdout.write(' done\n')
 
     # Generate Transaction blocks
