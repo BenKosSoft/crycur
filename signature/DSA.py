@@ -6,6 +6,7 @@ from pyprimes import isprime, nprimes
 import hashlib
 import sys
 import os
+import warnings
 
 if sys.version < (3, 6):
     import sha3
@@ -50,9 +51,12 @@ def dl_param_generator(small_bound, large_bound, filepath=None):
     small_lb, small_ub = 1 << (small_bound - 1), (1 << small_bound) - 1
     while True:
         q = randint(small_lb, small_ub)
-        is_prime = isprime(q)
-        if is_prime:
-            break
+        if _first_prime_check(q):
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                is_prime = isprime(q)
+                if is_prime:
+                    break
 
     # generate p
     lower_multiplier = ((1 << (large_bound - 1)) + q - 1) / q
@@ -60,9 +64,11 @@ def dl_param_generator(small_bound, large_bound, filepath=None):
     while True:
         p = randint(lower_multiplier, upper_multiplier) * q + 1
         if _first_prime_check(p):
-            is_prime = isprime(p)
-            if is_prime:
-                break
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                is_prime = isprime(p)
+                if is_prime:
+                    break
 
     # generate g
     while True:
