@@ -121,6 +121,12 @@ def generate(gen_blocks=False, start=None, count=None, fill_gaps=None, gen_dsa=F
         sys.stdout.write(' done\n')
 
 
+def _log_last_block(block_no):
+    with open(log_file, 'wb') as log:
+        log.write(str(block_no) + '\n')
+        log.flush()
+
+
 def mine():
     print '=' * 70
     print 'Starting mining... Press Ctrl+C to pause'
@@ -149,16 +155,14 @@ def mine():
                 generate(gen_blocks=True, start=i, count=chunk_size, nobanner=True)
             else:
                 print "Error: ", tx_block_file_name, "does not exist. Logging and exiting..."
-                with open(log_file, 'wb') as log:
-                    log.write(str(i))
-                    log.flush()
-                    sys.exit()
+                _log_last_block(i)
+                sys.exit()
+        _log_last_block(i)
+        print 'Done.'
     except KeyboardInterrupt:
         sys.stdout.write('Keyboard Interrupt. Logging...')
         sys.stdout.flush()
-        with open(log_file, 'wb') as log:
-            log.write(str(i))
-            log.flush()
+        _log_last_block(i)
         sys.stdout.write(' done\n')
 
 
@@ -195,30 +199,36 @@ def _validate_tx(args):
 
 
 def validate():
+    print '=' * 70
+    print 'Starting validation...'
+    print '=' * 70
     if cmd_args.chain:
         with open(chain_file_name) as chfile:
+            sys.stdout.write('Checking block chain file... ')
+            sys.stdout.flush()
             is_valid = True
             link = [None] * (link_len + 1)
             for i, line in enumerate(chfile):
                 if i != 0 and i % link_len == 0:
                     if link[-1][0:pow_len] != '0' * pow_len:
-                        print 'Invalid proof of work. Wrong number of leading zeros: ', link[-1]
+                        sys.stdout.write('Invalid proof of work. Wrong number of leading zeros:\n' + link[-1])
                         is_valid = False
                         break
                     if link[-1][:-1] != hashlib.sha3_256(''.join(link[1:link_len])).hexdigest():
-                        print 'Block chain does not validate! Broken link:\n', ''.join(link[1:])
+                        sys.stdout.write('Block chain does not validate! Broken link:\n', ''.join(link[1:]))
                         is_valid = False
                         break
                     if link[0] is not None and link[0] != link[1]:
-                        print 'Previous hash not same in the next link! Prev hash:\n', link[0], '\nNext link:'
-                        print '\n'.join(link[1:])
+                        sys.stdout.write('Previous hash not same in the next link! Prev hash:\n', link[0],
+                                         '\nNext link:' + ''.join(link[1:]))
                         is_valid = False
                         break
                     link[0] = link[-1]
                 link[(i % link_len) + 1] = line
             if is_valid:
-                print 'Block chain is OK...'
+                sys.stdout.write('OK...\n')
     if cmd_args.transactions:
+        sys.stdout.write('Checking individual transactions... ')
         is_valid = True
         with open(chain_file_name, 'r') as cfile:
             block_count = sum(1 for _ in cfile) / link_len
@@ -226,15 +236,17 @@ def validate():
         for res in pool.imap_unordered(_validate_tx, izip(xrange(block_count), cycle(xrange(tx_count)), repeat(configs)),
                                        chunksize=10):
             if res[0] == 1:
-                print 'Signature of the transaction does not verify. Block No:', res[1], 'Tx No:', res[2]
+                sys.stdout.write('Signature of the transaction does not verify. Block No:' + res[1] +
+                                 'Tx No:' + res[2] + '\n')
                 is_valid = False
             elif res[0] == 2:
-                print 'Transaction does not belong to the block number. Block No:', res[1], 'Tx No:', res[2]
+                sys.stdout.write('Transaction does not belong to the block number. Block No:' + res[1] +
+                                 'Tx No:' + res[2] + '\n')
                 is_valid = False
         pool.close()
         pool.join()
         if is_valid:
-            print 'Transactions are OK...'
+            sys.stdout.write('Transactions are OK...\n')
 
 
 # ======================================================================================================================
