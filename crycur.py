@@ -246,7 +246,7 @@ def validate():
         pool.close()
         pool.join()
         if is_valid:
-            sys.stdout.write('Transactions are OK...\n')
+            sys.stdout.write('OK...\n')
 
 
 # ======================================================================================================================
