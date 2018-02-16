@@ -152,7 +152,7 @@ def mine():
                 print "#%d Proof of work is written/appended to" % i, chain_file_name
                 i = i + 1
             elif not cmd_args.no_generate:
-                generate(gen_blocks=True, start=i, count=chunk_size, nobanner=True)
+                generate(gen_blocks=True, start=i, count=min(limit - i, chunk_size), nobanner=True)
             else:
                 print "Error: ", tx_block_file_name, "does not exist. Logging and exiting..."
                 _log_last_block(i)
@@ -246,7 +246,7 @@ def validate():
         pool.close()
         pool.join()
         if is_valid:
-            sys.stdout.write('Transactions are OK...\n')
+            sys.stdout.write('OK...\n')
 
 
 # ======================================================================================================================
