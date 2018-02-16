@@ -236,12 +236,12 @@ def validate():
         for res in pool.imap_unordered(_validate_tx, izip(xrange(block_count), cycle(xrange(tx_count)), repeat(configs)),
                                        chunksize=10):
             if res[0] == 1:
-                sys.stdout.write('Signature of the transaction does not verify. Block No:' + res[1] +
-                                 'Tx No:' + res[2] + '\n')
+                sys.stdout.write('Signature of the transaction does not verify. Block No:' + str(res[1]) +
+                                 'Tx No:' + str(res[2]) + '\n')
                 is_valid = False
             elif res[0] == 2:
-                sys.stdout.write('Transaction does not belong to the block number. Block No:' + res[1] +
-                                 'Tx No:' + res[2] + '\n')
+                sys.stdout.write('Transaction does not belong to the block number. Block No:' + str(res[1]) +
+                                 'Tx No:' + str(res[2]) + '\n')
                 is_valid = False
         pool.close()
         pool.join()
