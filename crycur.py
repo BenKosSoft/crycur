@@ -226,7 +226,7 @@ def validate():
                     link[0] = link[-1]
                 link[(i % link_len) + 1] = line
             if is_valid:
-                sys.stdout.write('OK...\n')
+                sys.stdout.write('OK.\n')
     if cmd_args.transactions:
         sys.stdout.write('Checking individual transactions... ')
         is_valid = True
@@ -236,17 +236,19 @@ def validate():
         for res in pool.imap_unordered(_validate_tx, izip(xrange(block_count), cycle(xrange(tx_count)), repeat(configs)),
                                        chunksize=10):
             if res[0] == 1:
+                sys.stdout.write('fail\n')
                 sys.stdout.write('Signature of the transaction does not verify. Block No:' + str(res[1]) +
-                                 'Tx No:' + str(res[2]) + '\n')
+                                 ' Tx No:' + str(res[2]) + '\n')
                 is_valid = False
             elif res[0] == 2:
+                sys.stdout.write('fail\n')
                 sys.stdout.write('Transaction does not belong to the block number. Block No:' + str(res[1]) +
-                                 'Tx No:' + str(res[2]) + '\n')
+                                 ' Tx No:' + str(res[2]) + '\n')
                 is_valid = False
         pool.close()
         pool.join()
         if is_valid:
-            sys.stdout.write('OK...\n')
+            sys.stdout.write('OK.\n')
 
 
 # ======================================================================================================================
