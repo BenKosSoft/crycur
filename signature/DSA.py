@@ -2,7 +2,7 @@
     Created by mbenlioglu & mertkosan on 12/13/2017
 """
 from random import randint
-from pyprimes import isprime, nprimes
+from pyprimes import is_prime, nprimes
 from multiprocessing import Process, Queue
 import hashlib
 import sys
@@ -60,7 +60,7 @@ def _generate_prime(multi_q, lower_bound, upper_bound, mult=1, shift=0):
             if _first_prime_check(q):
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore')
-                    if isprime(q):
+                    if is_prime(q):
                         multi_q.put(q)
                         break
     except KeyboardInterrupt:
