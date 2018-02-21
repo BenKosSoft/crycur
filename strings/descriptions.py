@@ -12,6 +12,7 @@ Examples
 python %(prog)s config --set num_proc 4   # Sets the default number of processors to 4
 python %(prog)s generate -dbc 50          # Creates DSA parameters, then using these parameters
                                           # generates 50 transaction blocks
+
 python %(prog)s mine                      # Continues mining starting from where it is left off
 python %(prog)s validate -ct              # Validates longest chain file and all transactions 
 '''

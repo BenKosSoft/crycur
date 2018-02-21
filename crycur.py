@@ -234,7 +234,7 @@ def validate():
             block_count = sum(1 for _ in cfile) / link_len
         pool = Pool(processes=num_processes)
         for res in pool.imap_unordered(_validate_tx, izip(xrange(block_count), cycle(xrange(tx_count)), repeat(configs)),
-                                       chunksize=10):
+                                       chunksize=32):
             if res[0] == 1:
                 sys.stdout.write('fail\n')
                 sys.stdout.write('Signature of the transaction does not verify. Block No:' + str(res[1]) +
