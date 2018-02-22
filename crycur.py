@@ -247,23 +247,29 @@ def _validate_tx(args):
 
     result = [0, block_no, tx_no]
     block_file_path = os.path.join(blocks_dir, block_filename_template % block_no)
-    with open(block_file_path) as bfile:
-        transaction = [l for l in islice(bfile, tx_no * tx_len, (tx_no + 1) * tx_len)]
-        signed_part = "".join(transaction[0:tx_len - 2])
-        p = int(transaction[2][len(TxBlockGen.transaction_constants['p']):])
-        q = int(transaction[3][len(TxBlockGen.transaction_constants['q']):])
-        g = int(transaction[4][len(TxBlockGen.transaction_constants['g']):])
-        beta = int(transaction[5][len(TxBlockGen.transaction_constants['payer_key']):])
-        r = int(transaction[8][len(TxBlockGen.transaction_constants['sig_r']):])
-        s = int(transaction[9][len(TxBlockGen.transaction_constants['sig_s']):])
-        if not DSA.sign_ver(signed_part, r, s, p, q, g, beta):
-            result = [1, block_no, tx_no]
-    with open(chain_file_name) as cfile:
-        for i, line in enumerate(cfile):
-            if i == link_len * block_no + 1:
-                if line[:-1] != PoW.get_merkle_root_hash(block_file_path, tx_len):
-                    result = [2, block_no, tx_count]
-                    break
+    try:
+        _check_file(block_file_path, create=False)
+
+        with open(block_file_path) as bfile:
+            transaction = [l for l in islice(bfile, tx_no * tx_len, (tx_no + 1) * tx_len)]
+            signed_part = "".join(transaction[0:tx_len - 2])
+            p = int(transaction[2][len(TxBlockGen.transaction_constants['p']):])
+            q = int(transaction[3][len(TxBlockGen.transaction_constants['q']):])
+            g = int(transaction[4][len(TxBlockGen.transaction_constants['g']):])
+            beta = int(transaction[5][len(TxBlockGen.transaction_constants['payer_key']):])
+            r = int(transaction[8][len(TxBlockGen.transaction_constants['sig_r']):])
+            s = int(transaction[9][len(TxBlockGen.transaction_constants['sig_s']):])
+            if not DSA.sign_ver(signed_part, r, s, p, q, g, beta):
+                result[0] = 1
+        with open(chain_file_name) as cfile:
+            for i, line in enumerate(cfile):
+                if i == link_len * block_no + 1:
+                    if line[:-1] != PoW.get_merkle_root_hash(block_file_path, tx_len):
+                        result[0] = 2
+                        break
+    except argparse.ArgumentTypeError:
+        result[0] = 3
+
     return result
 
 
@@ -324,11 +330,19 @@ def validate():
                 sys.stdout.write('Signature of the transaction does not verify. Block No:' + str(res[1]) +
                                  ' Tx No:' + str(res[2]) + '\n')
                 is_valid = False
+                break
             elif res[0] == 2:
                 sys.stdout.write('fail\n')
                 sys.stdout.write('Transaction does not belong to the block number. Block No:' + str(res[1]) +
                                  ' Tx No:' + str(res[2]) + '\n')
                 is_valid = False
+                break
+            elif res[0] == 3:
+                sys.stdout.write('fail\n')
+                sys.stdout.write('Transaction block file does not exist. Block No:' + str(res[1]) +
+                                 ' Tx No:' + str(res[2]) + '\n')
+                is_valid = False
+                break
         pool.close()
         pool.join()
         if is_valid:
