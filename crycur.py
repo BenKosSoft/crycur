@@ -191,7 +191,7 @@ def _log_last_block(block_no):
 def mine():
     # Validate/Create necessary files & folders
     try:
-        _check_dir(blocks_dir, create=False)
+        _check_dir(blocks_dir, create=True)
         _check_file(chain_file_name, create=True)
     except argparse.ArgumentTypeError:
         parser.error(str(sys.exc_info()[1]))
