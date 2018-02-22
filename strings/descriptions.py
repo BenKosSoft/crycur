@@ -19,7 +19,7 @@ python %(prog)s validate -ct              # Validates longest chain file and all
 
 # common prefix/suffixes
 _config_override = 'Overrides default settings and settings specified by "config --set". Execute "python %(prog)s' \
-                   'config --help" for more information about settings'
+                   ' config --help" for more information about settings'
 _specify_path = 'Specify the path for '
 
 # common path/config switches

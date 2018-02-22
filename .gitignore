@@ -156,5 +156,6 @@ fabric.properties
 ## Cryptocurrency specific files...
 **/.crylog
 blocks/
+*.block
 *.chain
 *.dsa

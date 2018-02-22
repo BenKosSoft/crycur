@@ -19,6 +19,55 @@ if sys.version_info < (3, 6):
 
 
 # ======================================================================================================================
+# Type checking functions
+# ======================================================================================================================
+def _check_dir(path, create=False):
+    if os.path.exists(path) and not os.path.isdir(path):
+        raise argparse.ArgumentTypeError('%r is not a valid directory!' % path)
+    elif not os.path.exists(path):
+        if create:
+            try:
+                os.makedirs(path)
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+        else:
+            raise argparse.ArgumentTypeError('%r is not a valid directory!' % path)
+    return path
+
+
+def _check_file(path, create=False):
+    if os.path.exists(path) and not os.path.isfile(path):
+        raise argparse.ArgumentTypeError('%r is not a valid file!' % path)
+    elif not os.path.exists(path):
+        if create:
+            try:
+                os.makedirs(os.path.dirname(path))
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+        else:
+            raise argparse.ArgumentTypeError('%r is not a valid file!' % path)
+    return path
+
+
+def _positive_int(val):
+    ival = int(val)
+    if ival < 1:
+        msg = '%r must be a positive number' % val
+        raise argparse.ArgumentTypeError(msg)
+    return ival
+
+
+def _proc_count(val):
+    if val == 'all':
+        return val
+    else:
+        ival = int(val)
+        return _positive_int(ival)
+
+
+# ======================================================================================================================
 # cmd callable functions and their helper functions
 # ======================================================================================================================
 def configure():
@@ -49,31 +98,43 @@ def _gen_tx_block_zipped(args):
 
 
 def generate(gen_blocks=False, start=None, count=None, fill_gaps=None, gen_dsa=False, nobanner=False):
+    gen_dsa = (hasattr(cmd_args, 'd') and cmd_args.d) or gen_dsa
+    gen_blocks = (hasattr(cmd_args, 'b') and cmd_args.b) or gen_blocks
+    fill_gaps = (hasattr(cmd_args, 'fill_gaps') and cmd_args.fill_gaps) or fill_gaps
+
+    if not gen_dsa and not gen_blocks:
+        print 'Nothing picked to generate. Exiting...'
+        sys.exit(0)
+
+    # Validate/Create necessary files & folders
+    try:
+        _check_file(dsa_param_file, create=True)
+    except argparse.ArgumentTypeError:
+        parser.error(str(sys.exc_info()[1]))
+        sys.exit(2)
+
     # Generate DSA file
-    if (hasattr(cmd_args, 'd') and cmd_args.d) or gen_dsa:
+    if gen_dsa:
         sys.stdout.write('Generating DSA parameter file....')
-        try:
-            os.makedirs(os.path.dirname(dsa_param_file))
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
+
         sys.stdout.flush()
         DSA.dl_param_generator(256, 2048, num_processes, dsa_param_file)
         sys.stdout.write(' done\n')
 
     # Generate Transaction blocks
-    if (hasattr(cmd_args, 'b') and cmd_args.b) or gen_blocks:
+    if gen_blocks:
         if count is None:
             count = cmd_args.count if hasattr(cmd_args, 'count') and cmd_args.count is not None else chunk_size
 
+        # Validate/Create necessary files & folders
         try:
-            os.makedirs(blocks_dir)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
+            _check_dir(blocks_dir, create=True)
+        except argparse.ArgumentTypeError:
+            parser.error(str(sys.exc_info()[1]))
+            sys.exit(2)
 
         # Adjust transaction numbers to be generated
-        if (hasattr(cmd_args, 'fill_gaps') and cmd_args.fill_gaps) or fill_gaps:
+        if fill_gaps:
             existing = sorted([int(os.path.splitext(f)[0][len(block_prefix) + 1:]) for f in os.listdir(blocks_dir)
                                if os.path.isfile(os.path.join(blocks_dir, f)) and f.startswith(block_prefix)])
             to_be_generated = []
@@ -128,6 +189,14 @@ def _log_last_block(block_no):
 
 
 def mine():
+    # Validate/Create necessary files & folders
+    try:
+        _check_dir(blocks_dir, create=False)
+        _check_file(chain_file_name, create=True)
+    except argparse.ArgumentTypeError:
+        parser.error(str(sys.exc_info()[1]))
+        sys.exit(2)
+
     print '=' * 70
     print 'Starting mining... Press Ctrl+C to pause'
     print '=' * 70
@@ -199,9 +268,23 @@ def _validate_tx(args):
 
 
 def validate():
+    if not cmd_args.chain and not cmd_args.transactions:
+        print 'Nothing picked to validate. Exiting...'
+        sys.exit(0)
+
+    # Validate/Create necessary files & folders
+    try:
+        _check_file(chain_file_name, create=False)
+        if cmd_args.transactions:
+            _check_dir(blocks_dir, create=False)
+    except argparse.ArgumentTypeError:
+        parser.error(str(sys.exc_info()[1]))
+        sys.exit(2)
+
     print '=' * 70
     print 'Starting validation...'
     print '=' * 70
+
     if cmd_args.chain:
         with open(chain_file_name) as chfile:
             sys.stdout.write('Checking block chain file... ')
@@ -229,6 +312,7 @@ def validate():
                 sys.stdout.write('OK.\n')
     if cmd_args.transactions:
         sys.stdout.write('Checking individual transactions... ')
+
         is_valid = True
         with open(chain_file_name, 'r') as cfile:
             block_count = sum(1 for _ in cfile) / link_len
@@ -249,38 +333,6 @@ def validate():
         pool.join()
         if is_valid:
             sys.stdout.write('OK.\n')
-
-
-# ======================================================================================================================
-# Type checking functions
-# ======================================================================================================================
-def _valid_dir(path):
-    if not os.path.exists(path) or not os.path.isdir(path):
-        msg = '%r is not a valid directory!' % path
-        raise argparse.ArgumentTypeError(msg)
-    return path
-
-
-def _valid_file(path):
-    if not os.path.exists(path) or not os.path.isfile(path):
-        raise argparse.ArgumentTypeError('%r is not a valid file!' % path)
-    return path
-
-
-def _positive_int(val):
-    ival = int(val)
-    if ival < 1:
-        msg = '%r must be a positive number' % val
-        raise argparse.ArgumentTypeError(msg)
-    return ival
-
-
-def _proc_count(val):
-    if val == 'all':
-        return val
-    else:
-        ival = int(val)
-        return _positive_int(ival)
 
 
 # ======================================================================================================================
@@ -311,26 +363,25 @@ def init_cmd_args():
 
     # parent parser for common functionalities
     parent_parser = argparse.ArgumentParser(add_help=False)
-    parent_parser.add_argument('--dsa_file', metavar='PATH', type=_valid_file, help=descriptions.path_dsa)
-    parent_parser.add_argument('--chain_file', metavar='PATH', type=_valid_file, help=descriptions.path_chain)
-    parent_parser.add_argument('--blocks_dir', metavar='PATH', type=_valid_dir,
-                               help=descriptions.path_blocksdir)
+    parent_parser.add_argument('--dsa_file', metavar='PATH', help=descriptions.path_dsa)
+    parent_parser.add_argument('--chain_file', metavar='PATH', help=descriptions.path_chain)
+    parent_parser.add_argument('--blocks_dir', metavar='PATH', help=descriptions.path_blocksdir)
     parent_parser.add_argument('--num_proc', metavar='N', type=_proc_count, help=descriptions.num_proc)
 
     # parser for "config"
     parser_conf = subparsers.add_parser('config', help=descriptions.config_title, description=descriptions.config_title,
-                                        epilog=descriptions.config_defaults,
+                                        prog=cmd_parser.prog, epilog=descriptions.config_defaults,
                                         formatter_class=argparse.RawDescriptionHelpFormatter)
     conf_group = parser_conf.add_mutually_exclusive_group(required=True)
     conf_group.add_argument('--set', nargs=2, metavar=('valName', 'newVal'), action='append',
                             help=descriptions.config_set)
-    conf_group.add_argument('--get', metavar='valName', help=descriptions.config_get)
+    conf_group.add_argument('--get', metavar='valName', action='append', help=descriptions.config_get)
     conf_group.add_argument('--reset', help=descriptions.config_reset, action='store_true')
     parser_conf.set_defaults(func=configure)
 
     # parser for "generate"
     parser_gen = subparsers.add_parser('generate', parents=[parent_parser], help=descriptions.generate_title,
-                                       description=descriptions.generate_title)
+                                       prog=cmd_parser.prog, description=descriptions.generate_title)
     parser_gen.add_argument('-d', action='store_true', help=descriptions.generate_d)
     parser_gen.add_argument('-b', action='store_true', help=descriptions.generate_b)
     parser_gen.add_argument('-i', '--ignore_existing', action='store_true', help=descriptions.generate_ignore)
@@ -340,7 +391,7 @@ def init_cmd_args():
 
     # parser for "mine"
     parser_mine = subparsers.add_parser('mine', help=descriptions.mine_title, description=descriptions.mine_title,
-                                        parents=[parent_parser])
+                                        prog=cmd_parser.prog, parents=[parent_parser])
     parser_mine.add_argument('-n', '--no_generate', action='store_true', help=descriptions.mine_nogenerate)
     parser_mine.add_argument('-s', '--start_from', type=_positive_int, help=descriptions.mine_startfrom)
     parser_mine.add_argument('--mine_count', help=descriptions.mine_blockcount)
@@ -349,7 +400,7 @@ def init_cmd_args():
 
     # parser for "validate"
     parser_val = subparsers.add_parser('validate', parents=[parent_parser], help=descriptions.validate_title,
-                                       description=descriptions.validate_title)
+                                       prog=cmd_parser.prog, description=descriptions.validate_title)
     parser_val.add_argument('-c', '--chain', action='store_true', help=descriptions.validate_chain)
     parser_val.add_argument('-t', '--transactions', action='store_true', help=descriptions.validate_trans)
     parser_val.set_defaults(func=validate)
