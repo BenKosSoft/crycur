@@ -5,6 +5,10 @@ Crycur is a commandline tool that introduces helpful functionalities for blockch
 Including, DSA parameter generation, random transaction block generation, proof of work calculation of transaction blocks
 for the chain, and validation for transaction blocks as well as the chain itself.   
 
+&nbsp;&nbsp;&nbsp;&nbsp;
+Crycur is OS independent. Meaning that, one can start block or dsa parameter generation and/or mining functions in one
+operating system and continue in another. Final result will be valid in all operating systems.
+
 **Implemented by:**
 
  * [M.Mucahid Benlioglu](https://github.com/mbenlioglu)
