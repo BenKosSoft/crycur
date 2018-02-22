@@ -40,8 +40,9 @@ For more information execute `$ python crycur.py --help`
 ## Adapted Cryptocurrency Format
 
 &nbsp;&nbsp;&nbsp;&nbsp;
-For proof of work(PoW) algorithm, sha3_256 is adapted. Every link of the chain consists of previous link's PoW, merkle
-root hash the transaction block, nonce value and PoW of link.
+For the proof of work(PoW) algorithm of [mining](https://en.wikipedia.org/wiki/Bitcoin#Mining), sha3_256 is adapted.
+Every link of the chain consists of previous link's PoW, Merkle root hash the transaction block, nonce value and PoW of
+link.
 
 &nbsp;&nbsp;&nbsp;&nbsp;
 Transaction blocks contains number of transactions which are hashed together to form a link in chain. Lastly, DSA parameters
