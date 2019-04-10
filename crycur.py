@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
     Created by mbenlioglu & mertkosan on 12/21/2017
 """
@@ -148,7 +149,7 @@ def generate(gen_blocks=False, start=None, count=None, fill_gaps=None, gen_dsa=F
             if start is None and cmd_args.ignore_existing:
                 start = 0
             elif start is None:
-                block_files = [int(os.path.splitext(f)[0][len(block_prefix):]) for f in os.listdir(blocks_dir)
+                block_files = [int(os.path.splitext(f)[0][len(block_prefix) + 1:]) for f in os.listdir(blocks_dir)
                                if os.path.isfile(os.path.join(blocks_dir, f)) and f.startswith(block_prefix)]
                 start = 0 if not block_files else max(block_files) + 1
             to_be_generated = xrange(start, start + count)
