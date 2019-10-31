@@ -219,18 +219,20 @@ def mine():
             tx_block_file_name = file_name % i
             if os.path.exists(tx_block_file_name):
                 PoW.calculate_pow(tx_block_file_name, chain_file_name, pow_len, tx_len, num_processes=num_processes)
-                print "#%d Proof of work is written/appended to" % i, chain_file_name
+                sys.stdout.write("#%d Proof of work is written/appended to %s\r" % (i, chain_file_name))
                 i = i + 1
             elif not cmd_args.no_generate:
                 generate(gen_blocks=True, start=i, count=min(limit - i, chunk_size), nobanner=True)
+            elif cmd_args.no_generate:
+                break
             else:
-                print "Error: ", tx_block_file_name, "does not exist. Logging and exiting..."
+                print "\nError: ", tx_block_file_name, "does not exist. Logging and exiting..."
                 _log_last_block(i)
                 sys.exit()
         _log_last_block(i)
-        print 'Done.'
+        print '\nDone.'
     except KeyboardInterrupt:
-        sys.stdout.write('Keyboard Interrupt. Logging...')
+        sys.stdout.write('\nKeyboard Interrupt. Logging...')
         sys.stdout.flush()
         _log_last_block(i)
         sys.stdout.write(' done\n')
