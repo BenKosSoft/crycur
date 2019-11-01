@@ -1,4 +1,4 @@
-# Crycur<sup>[1](#footnote)</sup>
+# Crycur
 
 &nbsp;&nbsp;&nbsp;&nbsp;
 Crycur is a commandline tool that introduces helpful functionalities for blockchain based crypto currency application.
@@ -68,7 +68,6 @@ consist of 2 large primes and a generator number.
     315748198267374607845047734207626022876
     0000000c0d2be69ed5d7c93247de41961999ac2dfa356ef05587842b7f2ff84b
 
----
+## Acknowledgement
 &nbsp;&nbsp;&nbsp;&nbsp;
-<sub><a name="footnote">1</a>: _This project initially created as a part of the term project for **CS411 - Cryptography**
-lecture of **Sabanci University**_</sub>
+_This project initially created as a part of the term project for **CS411 - Cryptography** lecture of **Sabanci University**_
