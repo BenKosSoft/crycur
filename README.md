@@ -69,5 +69,4 @@ consist of 2 large primes and a generator number.
     0000000c0d2be69ed5d7c93247de41961999ac2dfa356ef05587842b7f2ff84b
 
 ## Acknowledgement
-&nbsp;&nbsp;&nbsp;&nbsp;
 _This project initially created as a part of the term project for **CS411 - Cryptography** lecture of **Sabanci University**_
