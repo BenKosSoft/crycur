@@ -44,6 +44,6 @@ def gen_tx_block(p, q, g, count, filename=None):
     # write to file
     if filename is not None:
         with open(str(filename), "wb") as tbf:
-            tbf.write(transaction)
+            tbf.write(transaction.encode('utf-8'))
             tbf.flush()
     return transaction

@@ -11,6 +11,12 @@ import hashlib
 if sys.version_info < (3, 6):
     import sha3
 
+# Python 2.7 compatibility
+try:
+    range = xrange
+except NameError:
+    pass
+
 
 def _num_lines(path):
     i = -1
@@ -32,16 +38,16 @@ def get_merkle_root_hash(block_path, tx_len):
     transactions_hashes = []
     with open(block_path) as _file:
         lines = _file.readlines()
-        transaction_len = len(lines) / tx_len
-        for i in xrange(transaction_len):
+        transaction_len = len(lines) // tx_len
+        for i in range(transaction_len):
             transaction = "".join(lines[i * tx_len:i * tx_len + tx_len])
-            transactions_hashes.append(hashlib.sha3_256(transaction).hexdigest())
+            transactions_hashes.append(hashlib.sha3_256(transaction.encode('utf-8')).hexdigest())
     transactions_hashes = deque(transactions_hashes)
     _len = len(transactions_hashes)
     while _len > 1:
         a = transactions_hashes.popleft()
         b = transactions_hashes.popleft()
-        val = hashlib.sha3_256(a + b).hexdigest()
+        val = hashlib.sha3_256((a + b).encode('utf-8')).hexdigest()
         transactions_hashes.append(val)
         _len = len(transactions_hashes)
     return transactions_hashes.pop()
@@ -51,7 +57,7 @@ def _find_fitting_hash(multi_q, nonce_lb, nonce_ub, prev_pow, root_hash, pow_len
     try:
         while True:
             nonce = str(randint(nonce_lb, nonce_ub))
-            cur_pow = hashlib.sha3_256('\n'.join((prev_pow, root_hash, nonce, ''))).hexdigest()
+            cur_pow = hashlib.sha3_256(('\n'.join((prev_pow, root_hash, nonce, ''))).encode('utf-8')).hexdigest()
             if cur_pow[0:pow_len] == '0' * pow_len:
                 multi_q.put((nonce, cur_pow))
                 break
@@ -72,7 +78,7 @@ def calculate_pow(tx_block_file, chain_file, pow_len, tx_len, num_processes=1):
 
     processes = []
     multi_q = Queue()
-    for i in xrange(num_processes):
+    for i in range(num_processes):
         processes.append(Process(target=_find_fitting_hash,
                                  args=(multi_q, nonce_lb, nonce_ub, prev_pow, root_hash, pow_len)))
         processes[i].start()
@@ -84,5 +90,5 @@ def calculate_pow(tx_block_file, chain_file, pow_len, tx_len, num_processes=1):
     while not multi_q.empty():
         multi_q.get()
     with open(chain_file, 'ab') as cf:
-        cf.write('\n'.join((prev_pow, root_hash, nonce, cur_pow, '')))
+        cf.write(('\n'.join((prev_pow, root_hash, nonce, cur_pow, ''))).encode('utf-8'))
         cf.flush()
