@@ -1,7 +1,7 @@
 """
     Created by mbenlioglu & mertkosan on 12/13/2017
 """
-from __future__ import print_function, division
+from __future__ import absolute_import, print_function, division
 
 from random import randint
 from pyprimes import is_prime, nprimes

@@ -1,6 +1,8 @@
 """
     Created by mbenlioglu & mertkosan on 12/20/2017
 """
+from __future__ import absolute_import
+
 from signature import DSA
 from random import randint
 

@@ -1,6 +1,8 @@
 """
     Created by mbenlioglu on 12/20/2017
 """
+from __future__ import absolute_import, division
+
 import os
 import sys
 from multiprocessing import Process, Queue
