@@ -21,13 +21,13 @@ if sys.version_info < (3, 6):
 
 # Python 2.7 compatibility
 try:
-    import ConfigParser as configparser
+    from ConfigParser import ConfigParser, NoOptionError
     from itertools import izip
 
     zip = izip
     range = xrange
 except (ImportError, NameError):
-    import configparser
+    from configparser import ConfigParser, NoOptionError
 
 
 # ======================================================================================================================
@@ -95,7 +95,7 @@ def configure():
         for param in cmd_args.get:
             try:
                 val = configs.get('USER', param)
-            except configparser.NoOptionError:
+            except NoOptionError:
                 val = 'Option is not set!'
             print(msg % (param, val))
     elif cmd_args.reset is not None:
@@ -440,7 +440,7 @@ if __name__ == '__main__':
     freeze_support()
 
     # config file
-    configs = configparser.ConfigParser()
+    configs = ConfigParser()
     configs.read('./config.ini')
     if not configs.has_section('USER'):
         configs.add_section('USER')
