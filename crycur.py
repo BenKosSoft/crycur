@@ -2,7 +2,7 @@
 """
     Created by mbenlioglu & mertkosan on 12/21/2017
 """
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import, print_function, division
 
 import os
 import errno
