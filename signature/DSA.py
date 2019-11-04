@@ -1,6 +1,8 @@
 """
     Created by mbenlioglu & mertkosan on 12/13/2017
 """
+from __future__ import absolute_import, print_function, division
+
 from random import randint
 from pyprimes import is_prime, nprimes
 from multiprocessing import Process, Queue
@@ -9,8 +11,14 @@ import sys
 import os
 import warnings
 
-if sys.version < (3, 6):
+if sys.version_info < (3, 6):
     import sha3
+
+# Python 2.7 compatibility
+try:
+    range = xrange
+except NameError:
+    pass
 
 prime_list = list(nprimes(30))
 
@@ -38,7 +46,7 @@ def _multiplicative_inverse(num, modulo):
     newr = num
 
     while newr != 0:
-        quotient = r / newr
+        quotient = r // newr
         t, newt = newt, t - quotient * newt
         r, newr = newr, r - quotient * newr
     if r > 1:
@@ -71,7 +79,7 @@ def _generate_generator(multi_q, p, q):
     try:
         while True:
             alpha = randint(2, p - 1)
-            g = pow(alpha, (p - 1) / q, p)
+            g = pow(alpha, (p - 1) // q, p)
             if 1 != g:
                 multi_q.put(g)
                 break
@@ -86,7 +94,7 @@ def dl_param_generator(small_bound, large_bound, num_processes=1, filepath=None)
 
     processes = []
     multi_q = Queue()
-    for i in xrange(num_processes):
+    for i in range(num_processes):
         processes.append(Process(target=_generate_prime, args=(multi_q, small_lb, small_ub)))
         processes[i].start()
     q = multi_q.get()
@@ -95,9 +103,9 @@ def dl_param_generator(small_bound, large_bound, num_processes=1, filepath=None)
     _terminate_clear(processes, multi_q)
 
     # generate p
-    lower_multiplier = ((1 << (large_bound - 1)) + q - 1) / q
-    upper_multiplier = ((1 << large_bound) - 1) / q
-    for i in xrange(num_processes):
+    lower_multiplier = ((1 << (large_bound - 1)) + q - 1) // q
+    upper_multiplier = ((1 << large_bound) - 1) // q
+    for i in range(num_processes):
         processes[i] = Process(target=_generate_prime, args=(multi_q, lower_multiplier, upper_multiplier, q, 1))
         processes[i].start()
     p = multi_q.get()
@@ -106,7 +114,7 @@ def dl_param_generator(small_bound, large_bound, num_processes=1, filepath=None)
     _terminate_clear(processes, multi_q)
 
     # generate g
-    for i in xrange(num_processes):
+    for i in range(num_processes):
         processes[i] = Process(target=_generate_generator, args=(multi_q, p, q))
         processes[i].start()
     g = multi_q.get()
@@ -117,9 +125,9 @@ def dl_param_generator(small_bound, large_bound, num_processes=1, filepath=None)
     # Writing to file
     if filepath is not None:
         with open(str(filepath), 'wb') as _file:
-            _file.write(str(q) + "\n")
-            _file.write(str(p) + "\n")
-            _file.write(str(g))
+            _file.write((str(q) + "\n").encode('utf-8'))
+            _file.write((str(p) + "\n").encode('utf-8'))
+            _file.write(str(g).encode('utf-8'))
 
     return q, p, g
 
@@ -129,14 +137,14 @@ def key_gen(p, q, g, write_file=True):
     beta = pow(g, alpha, p)
     if write_file:
         with open('DSA_skey.txt', 'wb') as f:
-            f.write('%(q)d\n%(p)d\n%(g)d\n%(alpha)d\n' % {'q': q, 'p': p, 'g': g, 'alpha': alpha})
+            f.write(('%(q)d\n%(p)d\n%(g)d\n%(alpha)d\n' % {'q': q, 'p': p, 'g': g, 'alpha': alpha}).encode('utf-8'))
         with open('DSA_pkey.txt', 'wb') as f:
-            f.write('%(q)d\n%(p)d\n%(g)d\n%(beta)d\n' % {'q': q, 'p': p, 'g': g, 'beta': beta})
+            f.write(('%(q)d\n%(p)d\n%(g)d\n%(beta)d\n' % {'q': q, 'p': p, 'g': g, 'beta': beta}).encode('utf-8'))
     return alpha, beta
 
 
 def sign_gen(msg, p, q, g, alpha, beta):
-    msg_hash = int(hashlib.sha3_256(msg).hexdigest(), 16) % q
+    msg_hash = int(hashlib.sha3_256(msg.encode('utf-8')).hexdigest(), 16) % q
     k = randint(1, q - 1)
     r = pow(g, k, p) % q
     s = (alpha * r + k * msg_hash) % q
@@ -144,7 +152,7 @@ def sign_gen(msg, p, q, g, alpha, beta):
 
 
 def sign_ver(msg, r, s, p, q, g, beta):
-    msg_hash = int(hashlib.sha3_256(msg).hexdigest(), 16) % q
+    msg_hash = int(hashlib.sha3_256(msg.encode('utf-8')).hexdigest(), 16) % q
     v = _multiplicative_inverse(msg_hash, q)
     z1 = (s * v) % q
     z2 = ((q - r) * v) % q
@@ -158,15 +166,15 @@ def sign_ver_from_file(filename):
         with open(filename) as _file:
             lines = _file.readlines()
             signed_part = "".join(lines[0:len(lines) - 2])
-            p = long(lines[5][3:])
-            q = long(lines[6][3:])
-            g = long(lines[7][3:])
-            beta = long(lines[8][19:])
-            r = long(lines[9][15:])
-            s = long(lines[10][15:])
+            p = int(lines[5][3:])
+            q = int(lines[6][3:])
+            g = int(lines[7][3:])
+            beta = int(lines[8][19:])
+            r = int(lines[9][15:])
+            s = int(lines[10][15:])
         if sign_ver(signed_part, r, s, p, q, g, beta):
-            print "Signature is valid!"
+            print("Signature is valid!")
         else:
-            print "Signature is not valid!"
+            print("Signature is not valid!")
     else:
-        print filename + " doesn't exist!"
+        print(filename + " doesn't exist!")

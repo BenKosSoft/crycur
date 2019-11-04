@@ -2,13 +2,14 @@
 """
     Created by mbenlioglu & mertkosan on 12/21/2017
 """
+from __future__ import absolute_import, print_function, division
+
 import os
 import errno
 import sys
 import argparse
-import ConfigParser
 import hashlib
-from itertools import izip, repeat, islice, cycle
+from itertools import repeat, islice, cycle
 from multiprocessing import freeze_support, cpu_count, Pool
 
 from chaining import PoW, TxBlockGen
@@ -17,6 +18,16 @@ from strings import descriptions
 
 if sys.version_info < (3, 6):
     import sha3
+
+# Python 2.7 compatibility
+try:
+    from ConfigParser import ConfigParser, NoOptionError
+    from itertools import izip
+
+    zip = izip
+    range = xrange
+except (ImportError, NameError):
+    from configparser import ConfigParser, NoOptionError
 
 
 # ======================================================================================================================
@@ -84,9 +95,9 @@ def configure():
         for param in cmd_args.get:
             try:
                 val = configs.get('USER', param)
-            except ConfigParser.NoOptionError:
+            except NoOptionError:
                 val = 'Option is not set!'
-            print msg % (param, val)
+            print(msg % (param, val))
     elif cmd_args.reset is not None:
         configs.remove_section('USER')
         configs.add_section('USER')
@@ -104,7 +115,7 @@ def generate(gen_blocks=False, start=None, count=None, fill_gaps=None, gen_dsa=F
     fill_gaps = (hasattr(cmd_args, 'fill_gaps') and cmd_args.fill_gaps) or fill_gaps
 
     if not gen_dsa and not gen_blocks:
-        print 'Nothing picked to generate. Exiting...'
+        print('Nothing picked to generate. Exiting...')
         sys.exit(0)
 
     # Validate/Create necessary files & folders
@@ -152,12 +163,12 @@ def generate(gen_blocks=False, start=None, count=None, fill_gaps=None, gen_dsa=F
                 block_files = [int(os.path.splitext(f)[0][len(block_prefix) + 1:]) for f in os.listdir(blocks_dir)
                                if os.path.isfile(os.path.join(blocks_dir, f)) and f.startswith(block_prefix)]
                 start = 0 if not block_files else max(block_files) + 1
-            to_be_generated = xrange(start, start + count)
+            to_be_generated = range(start, start + count)
 
         if not nobanner:
-            print '=' * 70
-            print 'Starting creating blocks'
-            print '=' * 70
+            print('=' * 70)
+            print('Starting creating blocks')
+            print('=' * 70)
 
         # Create blocks
         if os.path.exists(dsa_param_file):
@@ -165,9 +176,9 @@ def generate(gen_blocks=False, start=None, count=None, fill_gaps=None, gen_dsa=F
                 q = int(inf.readline())
                 p = int(inf.readline())
                 g = int(inf.readline())
-            print "DSA parameters are read from file", dsa_param_file
+            print("DSA parameters are read from file", dsa_param_file)
         else:
-            print 'DSA parameters file could not be found!'
+            print('DSA parameters file could not be found!')
             return generate(gen_blocks, start, count, fill_gaps, True, nobanner)
 
         file_name = os.path.join(blocks_dir, block_filename_template)
@@ -175,8 +186,8 @@ def generate(gen_blocks=False, start=None, count=None, fill_gaps=None, gen_dsa=F
         sys.stdout.write('Generating %d missing transaction blocks...' % len(to_be_generated))
         sys.stdout.flush()
         pool = Pool(processes=num_processes)
-        pool.imap_unordered(_gen_tx_block_zipped, izip(repeat(p), repeat(q), repeat(g), repeat(tx_count),
-                                                       [file_name % j for j in to_be_generated]),
+        pool.imap_unordered(_gen_tx_block_zipped, zip(repeat(p), repeat(q), repeat(g), repeat(tx_count),
+                                                      [file_name % j for j in to_be_generated]),
                             chunksize=10)
         pool.close()
         pool.join()
@@ -185,7 +196,7 @@ def generate(gen_blocks=False, start=None, count=None, fill_gaps=None, gen_dsa=F
 
 def _log_last_block(block_no):
     with open(log_file, 'wb') as log:
-        log.write(str(block_no) + '\n')
+        log.write((str(block_no) + '\n').encode('utf-8'))
         log.flush()
 
 
@@ -198,21 +209,21 @@ def mine():
         parser.error(str(sys.exc_info()[1]))
         sys.exit(2)
 
-    print '=' * 70
-    print 'Starting mining... Press Ctrl+C to pause'
-    print '=' * 70
+    print('=' * 70)
+    print('Starting mining... Press Ctrl+C to pause')
+    print('=' * 70)
     if not cmd_args.no_generate:
-        print 'Filling transaction block gaps...'
+        print('Filling transaction block gaps...')
         generate(gen_blocks=True, fill_gaps=True, nobanner=True)
     i = 0
     try:
         if cmd_args.start_from is not None:
             i = int(cmd_args.start_from)
         elif os.path.exists(log_file) and os.path.isfile(log_file):
-            print "Continuing from where it's left off..."
+            print("Continuing from where it's left off...")
             with open(log_file) as log:
                 i = int(log.read())
-        print 'Starting from', i
+        print('Starting from', i)
         file_name = os.path.join(blocks_dir, block_filename_template)
         limit = i + mine_count
         while i < limit:
@@ -226,11 +237,11 @@ def mine():
             elif cmd_args.no_generate:
                 break
             else:
-                print "\nError: ", tx_block_file_name, "does not exist. Logging and exiting..."
+                print("\nError: ", tx_block_file_name, "does not exist. Logging and exiting...")
                 _log_last_block(i)
                 sys.exit()
         _log_last_block(i)
-        print '\nDone.'
+        print('\nDone.')
     except KeyboardInterrupt:
         sys.stdout.write('\nKeyboard Interrupt. Logging...')
         sys.stdout.flush()
@@ -278,7 +289,7 @@ def _validate_tx(args):
 
 def validate():
     if not cmd_args.chain and not cmd_args.transactions:
-        print 'Nothing picked to validate. Exiting...'
+        print('Nothing picked to validate. Exiting...')
         sys.exit(0)
 
     # Validate/Create necessary files & folders
@@ -290,9 +301,9 @@ def validate():
         parser.error(str(sys.exc_info()[1]))
         sys.exit(2)
 
-    print '=' * 70
-    print 'Starting validation...'
-    print '=' * 70
+    print('=' * 70)
+    print('Starting validation...')
+    print('=' * 70)
 
     if cmd_args.chain:
         with open(chain_file_name) as chfile:
@@ -306,7 +317,7 @@ def validate():
                         sys.stdout.write('Invalid proof of work. Wrong number of leading zeros:\n' + link[-1])
                         is_valid = False
                         break
-                    if link[-1][:-1] != hashlib.sha3_256(''.join(link[1:link_len])).hexdigest():
+                    if link[-1][:-1] != hashlib.sha3_256((''.join(link[1:link_len])).encode('utf-8')).hexdigest():
                         sys.stdout.write('Block chain does not validate! Broken link:\n', ''.join(link[1:]))
                         is_valid = False
                         break
@@ -324,9 +335,9 @@ def validate():
 
         is_valid = True
         with open(chain_file_name, 'r') as cfile:
-            block_count = sum(1 for _ in cfile) / link_len
+            block_count = sum(1 for _ in cfile) // link_len
         pool = Pool(processes=num_processes)
-        for res in pool.imap_unordered(_validate_tx, izip(xrange(block_count), cycle(xrange(tx_count)), repeat(configs)),
+        for res in pool.imap_unordered(_validate_tx, zip(range(block_count), cycle(range(tx_count)), repeat(configs)),
                                        chunksize=32):
             if res[0] == 1:
                 sys.stdout.write('fail\n')
@@ -429,7 +440,7 @@ if __name__ == '__main__':
     freeze_support()
 
     # config file
-    configs = ConfigParser.ConfigParser()
+    configs = ConfigParser()
     configs.read('./config.ini')
     if not configs.has_section('USER'):
         configs.add_section('USER')
@@ -449,8 +460,8 @@ if __name__ == '__main__':
 
     tx_count = 1 << (configs.getint('USER', 'tx_count').bit_length() - 1)
     if tx_count != configs.getint('USER', 'tx_count'):
-        print 'WARNING: Entered tx_count, %r, is not a power of 2. ' \
-              'Will be reduced to %r' % (configs.getint('USER', tx_count), tx_count)
+        print('WARNING: Entered tx_count, %r, is not a power of 2. ' \
+              'Will be reduced to %r' % (configs.getint('USER', tx_count), tx_count))
 
     dsa_param_file = configs.get('USER', 'dsa_param_file')
     chain_file_name = configs.get('USER', 'chain_file')
@@ -460,7 +471,7 @@ if __name__ == '__main__':
 
     pow_len = configs.getint('USER', 'pow_len')
     chunk_size = configs.getint('USER', 'chunk_size')
-    mine_count = float('inf') if configs.get('USER', 'mine_count') == 'infinite'\
+    mine_count = float('inf') if configs.get('USER', 'mine_count') == 'infinite' \
         else configs.getint('USER', 'mine_count')
     try:
         num_processes = cpu_count() if configs.get('USER', 'num_processes') == 'all' \

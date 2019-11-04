@@ -19,7 +19,7 @@ operating system and continue in another. Final result will be valid in all oper
 
 **Prerequisites:**
 
-- [Python](https://docs.python.org/2/) (developed and tested in python 2.7)
+- [Python](https://www.python.org/) (Python 3 version &ge;3.5; Python 2 version 2.7.x)
 - [pip](https://pip.pypa.io/en/stable/) for python package management
 
 ### Installation and Running
