@@ -40,15 +40,15 @@ config_title = 'Sets/gets the defined values that will be used by other commands
 config_defaults = '''\
 Available options for setting
 -----------------------------
-num_processes    # Number of processors that will be used in the program. (default: 'all' or 4 if not available)
-block_count      # Transaction block count to be mined. (default: 'infinite')
-chunk_size       # Number of transaction blocks that are generated and mined in one step. (default: 100)
-tx_count         # Number of transactions in every transaction block (default: 8)
-pow_len          # Number of leading 0's in the proof of work hash (default: 6)
-block_dir        # Path to the the directory in which transaction blocks are present. (default: ./blocks)
-block_prefix     # Common prefix in file names of transaction block files. (default: TransactionBlock)
-dsa_param_file   # Path of the file that consists DSA parameters (default: ./params.dsa)
-chain_file       # Path of the file that consists the longest chain (default: ./longest.chain)
+num_processes  # Number of processors that will be used in the program.        (default: 'all' or 4 if not available)
+block_count    # Transaction block count to be mined.                          (default: 'infinite')
+chunk_size     # Number of transaction blocks generated and mined in one step. (default: 100)
+tx_count       # Number of transactions in every transaction block             (default: 8)
+pow_len        # Number of leading 0's in the proof of work hash               (default: 6)
+block_dir      # Path to the directory in which transaction blocks are present.(default: ./blocks)
+block_prefix   # Common prefix in file names of transaction block files.       (default: TransactionBlock)
+dsa_param_file # Path of the file that consists DSA parameters                 (default: ./params.dsa)
+chain_file     # Path of the file that consists the longest chain              (default: ./longest.chain)
 '''
 config_set = 'Sets the value for the given parameter'
 config_get = 'Retrieves the current value for given parameter'
