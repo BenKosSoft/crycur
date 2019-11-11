@@ -37,7 +37,7 @@ def gen_tx_block(p, q, g, count, filename=None):
                                  transaction_constants['g'] + format(g, 'x'),
                                  transaction_constants['payer_key'] + format(beta_payer, 'x'),
                                  transaction_constants['payee_key'] + format(beta_payee, 'x'),
-                                 transaction_constants['amount'] + format(randint(_SATOSHI_LOWER, _SATOSHI_UPPER), 'x')
+                                 transaction_constants['amount'] + str(randint(_SATOSHI_LOWER, _SATOSHI_UPPER))
                                  + transaction_constants['unit'] + '\n'])
         r, s = DSA.sign_gen(signed_part, p, q, g, alpha_payer, beta_payer)
         transaction += signed_part + transaction_constants['sig_r'] + format(r, 'x') + "\n"
