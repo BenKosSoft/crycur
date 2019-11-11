@@ -103,6 +103,7 @@ def dl_param_generator(small_bound, large_bound, num_processes=1, filepath=None)
     _terminate_clear(processes, multi_q)
 
     # generate p
+    multi_q = Queue()
     lower_multiplier = ((1 << (large_bound - 1)) + q - 1) // q
     upper_multiplier = ((1 << large_bound) - 1) // q
     for i in range(num_processes):
@@ -114,6 +115,7 @@ def dl_param_generator(small_bound, large_bound, num_processes=1, filepath=None)
     _terminate_clear(processes, multi_q)
 
     # generate g
+    multi_q = Queue()
     for i in range(num_processes):
         processes[i] = Process(target=_generate_generator, args=(multi_q, p, q))
         processes[i].start()
