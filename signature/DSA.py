@@ -125,9 +125,9 @@ def dl_param_generator(small_bound, large_bound, num_processes=1, filepath=None)
     # Writing to file
     if filepath is not None:
         with open(str(filepath), 'wb') as _file:
-            _file.write((str(q) + "\n").encode('utf-8'))
-            _file.write((str(p) + "\n").encode('utf-8'))
-            _file.write(str(g).encode('utf-8'))
+            _file.write((format(q, 'x') + "\n").encode('utf-8'))
+            _file.write((format(p, 'x') + "\n").encode('utf-8'))
+            _file.write(format(g, 'x').encode('utf-8'))
 
     return q, p, g
 
@@ -137,9 +137,9 @@ def key_gen(p, q, g, write_file=True):
     beta = pow(g, alpha, p)
     if write_file:
         with open('DSA_skey.txt', 'wb') as f:
-            f.write(('%(q)d\n%(p)d\n%(g)d\n%(alpha)d\n' % {'q': q, 'p': p, 'g': g, 'alpha': alpha}).encode('utf-8'))
+            f.write(('%(q)x\n%(p)x\n%(g)x\n%(alpha)x\n' % {'q': q, 'p': p, 'g': g, 'alpha': alpha}).encode('utf-8'))
         with open('DSA_pkey.txt', 'wb') as f:
-            f.write(('%(q)d\n%(p)d\n%(g)d\n%(beta)d\n' % {'q': q, 'p': p, 'g': g, 'beta': beta}).encode('utf-8'))
+            f.write(('%(q)x\n%(p)x\n%(g)x\n%(beta)x\n' % {'q': q, 'p': p, 'g': g, 'beta': beta}).encode('utf-8'))
     return alpha, beta
 
 
@@ -166,12 +166,12 @@ def sign_ver_from_file(filename):
         with open(filename) as _file:
             lines = _file.readlines()
             signed_part = "".join(lines[0:len(lines) - 2])
-            p = int(lines[5][3:])
-            q = int(lines[6][3:])
-            g = int(lines[7][3:])
-            beta = int(lines[8][19:])
-            r = int(lines[9][15:])
-            s = int(lines[10][15:])
+            p = int(lines[5][3:], 16)
+            q = int(lines[6][3:], 16)
+            g = int(lines[7][3:], 16)
+            beta = int(lines[8][19:], 16)
+            r = int(lines[9][15:], 16)
+            s = int(lines[10][15:], 16)
         if sign_ver(signed_part, r, s, p, q, g, beta):
             print("Signature is valid!")
         else:

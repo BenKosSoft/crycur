@@ -31,17 +31,17 @@ def gen_tx_block(p, q, g, count, filename=None):
         alpha_payer, beta_payer = DSA.key_gen(p, q, g, write_file=False)
         alpha_payee, beta_payee = DSA.key_gen(p, q, g, write_file=False)
         signed_part = '\n'.join([transaction_constants['title'],
-                                 transaction_constants['serial'] + str(randint(_SERIAL_NO_LOWER, _SERIAL_NO_UPPER)),
-                                 transaction_constants['p'] + str(p),
-                                 transaction_constants['q'] + str(q),
-                                 transaction_constants['g'] + str(g),
-                                 transaction_constants['payer_key'] + str(beta_payer),
-                                 transaction_constants['payee_key'] + str(beta_payee),
-                                 transaction_constants['amount'] + str(randint(_SATOSHI_LOWER, _SATOSHI_UPPER))
+                                 transaction_constants['serial'] + format(randint(_SERIAL_NO_LOWER, _SERIAL_NO_UPPER), 'x'),
+                                 transaction_constants['p'] + format(p, 'x'),
+                                 transaction_constants['q'] + format(q, 'x'),
+                                 transaction_constants['g'] + format(g, 'x'),
+                                 transaction_constants['payer_key'] + format(beta_payer, 'x'),
+                                 transaction_constants['payee_key'] + format(beta_payee, 'x'),
+                                 transaction_constants['amount'] + format(randint(_SATOSHI_LOWER, _SATOSHI_UPPER), 'x')
                                  + transaction_constants['unit'] + '\n'])
         r, s = DSA.sign_gen(signed_part, p, q, g, alpha_payer, beta_payer)
-        transaction += signed_part + transaction_constants['sig_r'] + str(r) + "\n"
-        transaction += transaction_constants['sig_s'] + str(s) + "\n"
+        transaction += signed_part + transaction_constants['sig_r'] + format(r, 'x') + "\n"
+        transaction += transaction_constants['sig_s'] + format(s, 'x') + "\n"
 
     # write to file
     if filename is not None:

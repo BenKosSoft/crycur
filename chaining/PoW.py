@@ -58,7 +58,7 @@ def get_merkle_root_hash(block_path, tx_len):
 def _find_fitting_hash(multi_q, nonce_lb, nonce_ub, prev_pow, root_hash, pow_len):
     try:
         while True:
-            nonce = str(randint(nonce_lb, nonce_ub))
+            nonce = format(randint(nonce_lb, nonce_ub), 'x')
             cur_pow = hashlib.sha3_256(('\n'.join((prev_pow, root_hash, nonce, ''))).encode('utf-8')).hexdigest()
             if cur_pow[0:pow_len] == '0' * pow_len:
                 multi_q.put((nonce, cur_pow))

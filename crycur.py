@@ -118,6 +118,11 @@ def generate(gen_blocks=False, start=None, count=None, fill_gaps=None, gen_dsa=F
         print('Nothing picked to generate. Exiting...')
         sys.exit(0)
 
+    if not nobanner:
+        print('=' * 70)
+        print('Starting generation')
+        print('=' * 70)
+
     # Validate/Create necessary files & folders
     try:
         _check_file(dsa_param_file, create=True)
@@ -165,17 +170,12 @@ def generate(gen_blocks=False, start=None, count=None, fill_gaps=None, gen_dsa=F
                 start = 0 if not block_files else max(block_files) + 1
             to_be_generated = range(start, start + count)
 
-        if not nobanner:
-            print('=' * 70)
-            print('Starting creating blocks')
-            print('=' * 70)
-
         # Create blocks
         if os.path.exists(dsa_param_file):
             with open(dsa_param_file, 'r') as inf:
-                q = int(inf.readline())
-                p = int(inf.readline())
-                g = int(inf.readline())
+                q = int(inf.readline(), 16)
+                p = int(inf.readline(), 16)
+                g = int(inf.readline(), 16)
             print("DSA parameters are read from file", dsa_param_file)
         else:
             print('DSA parameters file could not be found!')
@@ -267,12 +267,12 @@ def _validate_tx(args):
         with open(block_file_path) as bfile:
             transaction = [l for l in islice(bfile, tx_no * tx_len, (tx_no + 1) * tx_len)]
             signed_part = "".join(transaction[0:tx_len - 2])
-            p = int(transaction[2][len(TxBlockGen.transaction_constants['p']):])
-            q = int(transaction[3][len(TxBlockGen.transaction_constants['q']):])
-            g = int(transaction[4][len(TxBlockGen.transaction_constants['g']):])
-            beta = int(transaction[5][len(TxBlockGen.transaction_constants['payer_key']):])
-            r = int(transaction[8][len(TxBlockGen.transaction_constants['sig_r']):])
-            s = int(transaction[9][len(TxBlockGen.transaction_constants['sig_s']):])
+            p = int(transaction[2][len(TxBlockGen.transaction_constants['p']):], 16)
+            q = int(transaction[3][len(TxBlockGen.transaction_constants['q']):], 16)
+            g = int(transaction[4][len(TxBlockGen.transaction_constants['g']):], 16)
+            beta = int(transaction[5][len(TxBlockGen.transaction_constants['payer_key']):], 16)
+            r = int(transaction[8][len(TxBlockGen.transaction_constants['sig_r']):], 16)
+            s = int(transaction[9][len(TxBlockGen.transaction_constants['sig_s']):], 16)
             if not DSA.sign_ver(signed_part, r, s, p, q, g, beta):
                 result[0] = 1
         with open(chain_file_name) as cfile:
@@ -422,7 +422,7 @@ def init_cmd_args():
                                         prog=cmd_parser.prog, parents=[parent_parser])
     parser_mine.add_argument('-n', '--no_generate', action='store_true', help=descriptions.mine_nogenerate)
     parser_mine.add_argument('-s', '--start_from', type=_positive_int, help=descriptions.mine_startfrom)
-    parser_mine.add_argument('--mine_count', help=descriptions.mine_blockcount)
+    parser_mine.add_argument('-c', '--mine_count', help=descriptions.mine_blockcount)
     parser_mine.add_argument('--chunk_size', type=_positive_int, help=descriptions.mine_chunksize)
     parser_mine.set_defaults(func=mine)
 
