@@ -229,7 +229,8 @@ def mine():
         while i < limit:
             tx_block_file_name = file_name % i
             if os.path.exists(tx_block_file_name):
-                PoW.calculate_pow(tx_block_file_name, chain_file_name, pow_len, tx_len, num_processes=num_processes)
+                PoW.calculate_pow(tx_block_file_name, chain_file_name, pow_len, tx_len,
+                                  num_processes=num_processes, enable_gpu=cmd_args.gpu)
                 sys.stdout.write("#%d Proof of work is written/appended to %s\r" % (i, chain_file_name))
                 i = i + 1
             elif not cmd_args.no_generate:
@@ -238,8 +239,7 @@ def mine():
                 break
             else:
                 print("\nError: ", tx_block_file_name, "does not exist. Logging and exiting...")
-                _log_last_block(i)
-                sys.exit()
+                break
         _log_last_block(i)
         print('\nDone.')
     except KeyboardInterrupt:
@@ -309,58 +309,45 @@ def validate():
         with open(chain_file_name) as chfile:
             sys.stdout.write('Checking block chain file... ')
             sys.stdout.flush()
-            is_valid = True
+            msg = 'OK\n'
             link = [None] * (link_len + 1)
             for i, line in enumerate(chfile):
                 if i != 0 and i % link_len == 0:
                     if link[-1][0:pow_len] != '0' * pow_len:
-                        sys.stdout.write('Invalid proof of work. Wrong number of leading zeros:\n' + link[-1])
-                        is_valid = False
+                        msg += 'Fail\nInvalid proof of work. Wrong number of leading zeros:\n' + link[-1]
                         break
                     if link[-1][:-1] != hashlib.sha3_256((''.join(link[1:link_len])).encode('utf-8')).hexdigest():
-                        sys.stdout.write('Block chain does not validate! Broken link:\n', ''.join(link[1:]))
-                        is_valid = False
+                        msg += 'fail\nBlock chain does not validate! Broken link:\n' + ''.join(link[1:])
                         break
                     if link[0] is not None and link[0] != link[1]:
-                        sys.stdout.write('Previous hash not same in the next link! Prev hash:\n', link[0],
-                                         '\nNext link:' + ''.join(link[1:]))
-                        is_valid = False
+                        msg += 'fail\nPrevious hash not same in the next link! Prev hash:\n' + link[0] \
+                               + '\nNext link:' + ''.join(link[1:])
                         break
                     link[0] = link[-1]
                 link[(i % link_len) + 1] = line
-            if is_valid:
-                sys.stdout.write('OK.\n')
+            sys.stdout.write(msg)
     if cmd_args.transactions:
         sys.stdout.write('Checking individual transactions... ')
 
-        is_valid = True
+        msg = "OK\n"
         with open(chain_file_name, 'r') as cfile:
             block_count = sum(1 for _ in cfile) // link_len
         pool = Pool(processes=num_processes)
         for res in pool.imap_unordered(_validate_tx, zip(range(block_count), cycle(range(tx_count)), repeat(configs)),
                                        chunksize=32):
-            if res[0] == 1:
+            if res[0] > 0:
                 sys.stdout.write('fail\n')
-                sys.stdout.write('Signature of the transaction does not verify. Block No:' + str(res[1]) +
-                                 ' Tx No:' + str(res[2]) + '\n')
-                is_valid = False
-                break
-            elif res[0] == 2:
-                sys.stdout.write('fail\n')
-                sys.stdout.write('Transaction does not belong to the block number. Block No:' + str(res[1]) +
-                                 ' Tx No:' + str(res[2]) + '\n')
-                is_valid = False
-                break
-            elif res[0] == 3:
-                sys.stdout.write('fail\n')
-                sys.stdout.write('Transaction block file does not exist. Block No:' + str(res[1]) +
-                                 ' Tx No:' + str(res[2]) + '\n')
-                is_valid = False
+                if res[0] == 1:
+                    msg = 'Signature of the transaction does not verify. Block No:'
+                elif res[0] == 2:
+                    msg = 'Transaction does not belong to the block number. Block No:'
+                elif res[0] == 3:
+                    msg = 'Transaction block file does not exist. Block No:'
+                msg += str(res[1]) + ' Tx No:' + str(res[2]) + '\n'
                 break
         pool.close()
         pool.join()
-        if is_valid:
-            sys.stdout.write('OK.\n')
+        sys.stdout.write(msg)
 
 
 # ======================================================================================================================
@@ -391,9 +378,9 @@ def init_cmd_args():
 
     # parent parser for common functionalities
     parent_parser = argparse.ArgumentParser(add_help=False)
-    parent_parser.add_argument('--dsa_file', metavar='PATH', help=descriptions.path_dsa)
-    parent_parser.add_argument('--chain_file', metavar='PATH', help=descriptions.path_chain)
     parent_parser.add_argument('--blocks_dir', metavar='PATH', help=descriptions.path_blocksdir)
+    parent_parser.add_argument('--chain_file', metavar='PATH', help=descriptions.path_chain)
+    parent_parser.add_argument('--dsa_file', metavar='PATH', help=descriptions.path_dsa)
     parent_parser.add_argument('--num_proc', metavar='N', type=_proc_count, help=descriptions.num_proc)
 
     # parser for "config"
@@ -401,28 +388,29 @@ def init_cmd_args():
                                         prog=cmd_parser.prog, epilog=descriptions.config_defaults,
                                         formatter_class=argparse.RawDescriptionHelpFormatter)
     conf_group = parser_conf.add_mutually_exclusive_group(required=True)
+    conf_group.add_argument('--get', metavar='valName', action='append', help=descriptions.config_get)
     conf_group.add_argument('--set', nargs=2, metavar=('valName', 'newVal'), action='append',
                             help=descriptions.config_set)
-    conf_group.add_argument('--get', metavar='valName', action='append', help=descriptions.config_get)
     conf_group.add_argument('--reset', help=descriptions.config_reset, action='store_true')
     parser_conf.set_defaults(func=configure)
 
     # parser for "generate"
     parser_gen = subparsers.add_parser('generate', parents=[parent_parser], help=descriptions.generate_title,
                                        prog=cmd_parser.prog, description=descriptions.generate_title)
-    parser_gen.add_argument('-d', action='store_true', help=descriptions.generate_d)
     parser_gen.add_argument('-b', action='store_true', help=descriptions.generate_b)
-    parser_gen.add_argument('-i', '--ignore_existing', action='store_true', help=descriptions.generate_ignore)
-    parser_gen.add_argument('-f', '--fill_gaps', action='store_true', help=descriptions.generate_fill)
     parser_gen.add_argument('-c', '--count', type=_positive_int, help=descriptions.generate_count)
+    parser_gen.add_argument('-d', action='store_true', help=descriptions.generate_d)
+    parser_gen.add_argument('-f', '--fill_gaps', action='store_true', help=descriptions.generate_fill)
+    parser_gen.add_argument('-i', '--ignore_existing', action='store_true', help=descriptions.generate_ignore)
     parser_gen.set_defaults(func=generate)
 
     # parser for "mine"
     parser_mine = subparsers.add_parser('mine', help=descriptions.mine_title, description=descriptions.mine_title,
                                         prog=cmd_parser.prog, parents=[parent_parser])
+    parser_mine.add_argument('-c', '--mine_count', help=descriptions.mine_blockcount)
+    parser_mine.add_argument('-g', '--gpu', action='store_true', help=descriptions.mine_gpu)
     parser_mine.add_argument('-n', '--no_generate', action='store_true', help=descriptions.mine_nogenerate)
     parser_mine.add_argument('-s', '--start_from', type=_positive_int, help=descriptions.mine_startfrom)
-    parser_mine.add_argument('-c', '--mine_count', help=descriptions.mine_blockcount)
     parser_mine.add_argument('--chunk_size', type=_positive_int, help=descriptions.mine_chunksize)
     parser_mine.set_defaults(func=mine)
 

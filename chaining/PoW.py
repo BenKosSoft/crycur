@@ -67,7 +67,7 @@ def _find_fitting_hash(multi_q, nonce_lb, nonce_ub, prev_pow, root_hash, pow_len
         multi_q.put((None, None))
 
 
-def calculate_pow(tx_block_file, chain_file, pow_len, tx_len, num_processes=1):
+def calculate_pow(tx_block_file, chain_file, pow_len, tx_len, num_processes=1, enable_gpu=False):
     if not os.path.exists(tx_block_file) or not os.path.isfile(tx_block_file):
         raise ValueError('tx_block_file: given path does not exist or not a file')
 

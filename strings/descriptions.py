@@ -75,6 +75,7 @@ mine_blockcount = 'Number of transaction blocks of which proof of works will be 
                   ' %(config_override)s' % {'config_override': _config_override}
 mine_chunksize = 'Number of transaction blocks that are generated and mined in one step. ' \
                  ' %(config_override)s' % {'config_override': _config_override}
+mine_gpu = 'Enable GPU acceleration.\nMake sure you have the requirements described in README.md'
 
 # validate
 validate_title = 'Validates integrity of longest chain and transactions.'
